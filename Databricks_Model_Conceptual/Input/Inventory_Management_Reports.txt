@@ -1,0 +1,196 @@
+Analytical Reporting Requirements for Inventory Management 
+
+ 
+Following are the reporting requirements of the Inventory Management Manager to take decisions on a  daily basis. An Analytical Data model is to be developed by understanding these reporting requirements. 
+
+1. Inventory Stock Levels Report 
+
+Objectives of the Report:
+To provide visibility into the current stock levels across different warehouses and ensure inventory is maintained within optimal levels to avoid stockouts or overstocking. 
+
+Uses of the Report:
+Identify products nearing stockout levels for timely replenishment. Highlight overstocked products that may require redistribution. Track trends in inventory usage for planning purposes. 
+
+Data Attributes in the Report:
+Product name, category, and stock level. Warehouse name and location. Minimum and maximum threshold levels. Stock replenishment status (below, optimal, overstocked). 
+
+KPIs and Metrics in the Report:
+Days of Inventory Remaining (based on sales velocity). Stockout percentage (per warehouse or product). Overstock percentage. 
+
+Interactivity in the Report:
+Drill Down: From total inventory by product category to individual product details. Drill Through: Link to stock adjustment history for specific products. Drill Up: Aggregate inventory levels by warehouse or region. 
+
+Calculations in the Report:
+Reorder point = Average daily sales × Lead time. Overstock percentage = (Current stock - Max threshold) / Max threshold × 100. Days of Inventory Remaining = Current stock / Average daily sales. 
+
+Data Constraints:
+* Product Name: Must be unique within the system.
+* Stock Level: Must be a non-negative integer.
+* Minimum and Maximum Threshold Levels: Must be positive integers, with the minimum threshold less than the maximum threshold.
+* Stock Replenishment Status: Must be one of the predefined values: "Below", "Optimal", "Overstocked".
+* Prevent duplicate entries for unique fields
+
+Validations:
+* Ensure that the Days of Inventory Remaining calculation does not result in a negative value.
+* Validate that the Overstock Percentage is calculated correctly and does not exceed 100% unless explicitly allowed.
+* Ensure that the Reorder Point is calculated based on valid historical sales data and lead time.
+
+Security Access for the Report:
+Warehouse managers can view their specific warehouse data only. Inventory managers can access consolidated data across all warehouses. Executives can view aggregate insights for strategic decision-making. 
+
+Indicative Layout of the Report:
+Top section: KPI dashboard with stock levels, stockout percentage, and overstock percentage. Middle section: Heatmap of warehouse locations and their stock levels. Bottom section: Detailed table showing products by category, stock levels, and reorder points. 
+
+2. Supplier Performance Report 
+
+Objectives of the Report:
+Evaluate supplier efficiency in terms of delivery timeliness, order accuracy, and cost-effectiveness to support procurement decisions. 
+
+Uses of the Report:
+Identify reliable suppliers for future procurement. Negotiate better terms with underperforming suppliers. Improve the supplier selection process. 
+
+Data Attributes in the Report:
+Supplier name, average delivery time, and order fulfillment rate. Total purchase order value and rejected items percentage. Delayed delivery percentage. 
+
+KPIs and Metrics in the Report:
+On-Time Delivery Rate (%). Average Lead Time (days). Defective Items Percentage (%). Supplier Fulfillment Rate (%). 
+
+Interactivity in the Report:
+Drill Down: From supplier performance summary to individual purchase orders. Drill Through: Link to specific shipment or adjustment details. Drill Up: Aggregate supplier performance by category or region. 
+
+Calculations in the Report:
+On-Time Delivery Rate = (Orders Delivered on Time / Total Orders) × 100. Defective Items Percentage = (Defective Items / Total Items Ordered) × 100. 
+
+Data Constraints:
+* Supplier Name: Must be unique and non-null.
+* Average Delivery Time: Must be a positive number (in days).
+* Order Fulfillment Rate: Must be a percentage between 0% and 100%.
+* Rejected Items Percentage: Must be a percentage between 0% and 100%.
+* Delayed Delivery Percentage: Must be a percentage between 0% and 100%.
+* Prevent duplicate entries for unique fields
+
+Validations:
+* Ensure that the On-Time Delivery Rate is calculated correctly and does not exceed 100%.
+* Validate that the Defective Items Percentage is based on the total items ordered and not just the delivered items.
+* Ensure that the Supplier Fulfillment Rate is consistent with the total purchase order value and rejected items.
+
+Security Access for the Report:
+Procurement team access to detailed supplier performance data. Senior management access to aggregated supplier metrics for negotiations. 
+
+Indicative Layout of the Report:
+Top section: KPI cards for On-Time Delivery Rate, Lead Time, and Defective Items Percentage. Middle section: Trend chart of supplier performance over time. Bottom section: Table of supplier details and metrics. 
+
+3. Sales and Inventory Correlation Report 
+
+Objectives of the Report: 
+Analyze the relationship between sales trends and inventory levels to optimize stock management and reduce wastage. 
+
+Uses of the Report:
+Identify fast-moving and slow-moving products. Forecast inventory requirements based on sales patterns. Reduce inventory holding costs. 
+
+Data Attributes in the Report:
+Product name, sales quantity, and inventory levels. Warehouse and region. Sales trends over time. 
+
+KPIs and Metrics in the Report:
+Inventory Turnover Ratio. Fast-Moving vs. Slow-Moving Product Ratio. Average Days to Sell Inventory. 
+
+Interactivity in the Report:
+Drill Down: From total sales by category to individual product sales trends. Drill Through: Link to inventory adjustment history for specific products. Drill Up: Aggregate sales and inventory metrics by region or warehouse. 
+
+Calculations in the Report:
+Inventory Turnover Ratio = Cost of Goods Sold / Average Inventory. Average Days to Sell = 365 / Inventory Turnover Ratio. 
+
+Data Constraints:
+* Product Name: Must be unique and non-null.
+* Sales Quantity: Must be a non-negative integer.
+* Inventory Levels: Must be a non-negative integer.
+* Sales Trends: Must be based on valid historical data.
+* Inventory Turnover Ratio: Must be a positive number.
+* Prevent duplicate entries for unique fields
+
+Validations:
+* Ensure that the Inventory Turnover Ratio is calculated correctly using the cost of goods sold and average inventory.
+* Validate that the Average Days to Sell Inventory is a positive number and does not exceed 365 days.
+* Ensure that the Fast-Moving vs. Slow-Moving Product Ratio is based on valid sales and inventory data.
+
+Security Access for the Report:
+Sales team access to product-specific sales data. Inventory managers access to stock levels and trends. Executives access to aggregated sales and inventory KPIs. 
+
+Indicative Layout of the Report:
+Top section: KPI dashboard showing turnover ratio and average days to sell. Middle section: Line chart showing sales vs. inventory trends over time. Bottom section: Table of products, sales, and inventory metrics. 
+
+4. Warehouse Utilization Report:
+
+Objectives of the Report:
+To monitor warehouse capacity utilization and identify opportunities to optimize storage space. 
+
+Uses of the Report: 
+Maximize storage efficiency. Plan inventory redistribution across warehouses. Support decisions for warehouse expansion or downsizing. 
+
+Data Attributes in the Report:
+Warehouse name, capacity, and utilized space. Inventory levels and product categories. 
+
+KPIs and Metrics in the Report:
+Warehouse Utilization Rate (%). Underutilized Space (square feet). Overstocked vs. Understocked Percentage. 
+
+Interactivity in the Report:
+Drill Down: From total warehouse utilization to product-level stock details. Drill Through: Link to stock adjustment logs for specific warehouses. Drill Up: Aggregate utilization data by region or type of warehouse. 
+
+Calculations in the Report: 
+Warehouse Utilization Rate = (Utilized Space / Total Capacity) × 100. Underutilized Space = Total Capacity - Utilized Space. 
+
+Data Constraints:
+* Warehouse Name: Must be unique and non-null.
+* Warehouse Capacity: Must be a positive number (in square feet or cubic meters).
+* Utilized Space: Must be a non-negative number and cannot exceed the total capacity.
+* Underutilized Space: Must be a non-negative number.
+* Prevent duplicate entries for unique fields
+
+Validations:
+* Ensure that the Warehouse Utilization Rate is calculated correctly and does not exceed 100%.
+* Validate that the Underutilized Space is calculated as the difference between total capacity and utilized space.
+* Ensure that the Overstocked vs. Understocked Percentage is based on valid inventory levels and thresholds.
+
+Security Access for the Report:
+Warehouse managers access their warehouse-specific data. Inventory managers access consolidated warehouse utilization data. 
+
+Indicative Layout of the Report:
+Top section: KPI cards for utilization rate and underutilized space. Middle section: Bar chart comparing warehouse utilization rates. Bottom section: Table with warehouse details and metrics. 
+
+5. Product Demand Forecast Report 
+
+Objectives of the Report: 
+Provide predictive insights into future demand for products to support inventory planning and procurement. 
+
+Uses of the Report: 
+Reduce stockouts by forecasting high-demand periods. Optimize inventory levels to meet future demand. Plan procurement schedules effectively. 
+
+Data Attributes in the Report: 
+Product name, category, and historical sales data. Warehouse and region. Predicted demand for the next period. 
+
+KPIs and Metrics in the Report: 
+Forecast Accuracy (%). Predicted vs. Actual Demand. Seasonal Demand Trends. 
+
+Interactivity in the Report: 
+Drill Down: From total forecasted demand to region-specific demand. Drill Through: Link to sales trends and inventory adjustments. Drill Up: Aggregate demand forecasts by category or region. 
+
+Calculations in the Report: 
+Predicted Demand = (Historical Sales + Seasonal Factors) × Trend Factors. Forecast Accuracy = (1 - |Actual - Predicted| / Actual) × 100. 
+
+Data Constraints:
+* Product Name: Must be unique and non-null.
+* Historical Sales Data: Must be based on valid, non-negative numbers.
+* Predicted Demand: Must be a non-negative number.
+* Forecast Accuracy: Must be a percentage between 0% and 100%.
+* Prevent duplicate entries for unique fields
+
+Validations:
+* Ensure that the Predicted Demand is calculated using valid historical sales data, seasonal factors, and trend factors.
+* Validate that the Forecast Accuracy is calculated correctly and does not exceed 100%.
+* Ensure that the Seasonal Demand Trends are based on historical data and align with the predicted demand.
+
+Security Access for the Report: 
+Demand planners access detailed product demand forecasts. Executives access high-level aggregated forecasts. 
+
+Indicative Layout of the Report: 
+Top section: KPI cards for forecast accuracy and predicted demand. Middle section: Line chart showing predicted vs. actual demand. Bottom section: Table with product demand forecasts and trends. 
