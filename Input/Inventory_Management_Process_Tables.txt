@@ -1,0 +1,54 @@
+Inventory Management Application Data Model
+
+The tables in the Inventory Management application include following
+Products , Suppliers, Warehouses, Inventory, Orders, Order_Details , Shipments, Returns, Stock_levels, Customers
+Below tables list the attributes of each table along with the data type, constraints and the domain values
+
+-----------------------------------------------------------------------------------------------------------------------------------------------------------
+Table Name    | Column Name         | Business Description                                 | Data Type     | Constraints          | Domain Values
+-----------------------------------------------------------------------------------------------------------------------------------------------------------
+Products      | Product_ID          | Unique identifier for each product                  | INT            | Primary Key, Not Null| N/A
+              | Product_Name        | Name of the product                                 | VARCHAR(255)   | Not Null             | N/A
+              | Category            | Product category                                    | VARCHAR(100)   | Not Null             | Electronics, Apparel, Furniture, etc. 
+-----------------------------------------------------------------------------------------------------------------------------------------------------------
+Suppliers     | Supplier_ID         | Unique identifier for each supplier                 | INT            | Primary Key, Not Null| N/A
+              | Supplier_Name       | Name of the supplier                                | VARCHAR(255)   | Not Null             | N/A
+              | Contact_Number      | Contact number of the supplier                      | VARCHAR(20)    | Not Null             | N/A
+              | Product_ID          | Unique identifier for each product                  | INT            | Primary Key, Not Null| N/A
+-----------------------------------------------------------------------------------------------------------------------------------------------------------
+Warehouses    | Warehouse_ID        | Unique identifier for each warehouse                | INT            | Primary Key, Not Null| N/A
+              | Location            | Physical location of the warehouse                  | VARCHAR(255)   | Not Null             | N/A
+              | Capacity            | Total storage capacity of the warehouse             | INT            | Not Null             | N/A
+-----------------------------------------------------------------------------------------------------------------------------------------------------------
+Inventory     | Inventory_ID        | Unique identifier for inventory records             | INT            | Primary Key, Not Null| N/A
+              | Product_ID          | Reference to the product in inventory               | INT            | Foreign Key          | N/A
+              | Quantity_Available  | Quantity of product available in inventory          | INT            | Not Null             | N/A
+Warehouses    | Warehouse_ID        | Unique identifier for each warehouse                | INT            | Not Null		  | N/A
+
+-----------------------------------------------------------------------------------------------------------------------------------------------------------
+Orders        | Order_ID            | Unique identifier for customer orders               | INT            | Primary Key, Not Null| N/A
+              | Customer_ID         | Reference to the customer placing the order         | INT            | Foreign Key          | N/A
+              | Order_Date          | Date when the order was placed                      | DATE           | Not Null             | N/A
+-----------------------------------------------------------------------------------------------------------------------------------------------------------
+Order_Details | Order_Detail_ID     | Unique identifier for order line items              | INT            | Primary Key, Not Null| N/A
+              | Order_ID            | Reference to the order                              | INT            | Foreign Key          | N/A
+              | Product_ID          | Reference to the product in the order               | INT            | Foreign Key          | N/A
+              | Quantity_Ordered    | Quantity of product ordered                         | INT            | Not Null             | N/A
+-----------------------------------------------------------------------------------------------------------------------------------------------------------
+Shipments     | Shipment_ID         | Unique identifier for shipments                     | INT            | Primary Key, Not Null| N/A
+              | Order_ID            | Reference to the order being shipped                | INT            | Foreign Key          | N/A
+              | Shipment_Date       | Date when the shipment was dispatched               | DATE           | Not Null             | N/A
+-----------------------------------------------------------------------------------------------------------------------------------------------------------
+Returns       | Return_ID           | Unique identifier for product returns               | INT            | Primary Key, Not Null| N/A
+              | Order_ID            | Reference to the order associated with the return   | INT            | Foreign Key          | N/A
+              | Return_Reason       | Reason for the product return                       | VARCHAR(255)   | Not Null             | Damaged, Defective, Wrong Item, etc.
+-----------------------------------------------------------------------------------------------------------------------------------------------------------
+Stock_Levels  | Stock_Level_ID      | Unique identifier for stock level records           | INT            | Primary Key, Not Null| N/A
+              | Warehouse_ID        | Reference to the warehouse                          | INT            | Foreign Key          | N/A
+              | Product_ID          | Reference to the product                            | INT            | Foreign Key          | N/A
+              | Reorder_Threshold   | Quantity at which the product needs to be reordered | INT            | Not Null             | N/A
+-----------------------------------------------------------------------------------------------------------------------------------------------------------
+Customers     | Customer_ID         | Unique identifier for each customer                 | INT            | Primary Key, Not Null| N/A
+              | Customer_Name       | Name of the customer                                | VARCHAR(255)   | Not Null             | N/A
+              | Email               | Contact email address of the customer               | VARCHAR(255)   | Not Null, Unique     | N/A
+-----------------------------------------------------------------------------------------------------------------------------------------------------------
