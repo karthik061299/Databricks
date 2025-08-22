@@ -1,273 +1,327 @@
 _____________________________________________
 ## *Author*: AAVA
 ## *Created on*: 
-## *Description*: Databricks Bronze Model Data Mapping for Inventory Management System
+## *Description*: Comprehensive Bronze Layer Data Mapping for Inventory Management System
 ## *Version*: 1
 ## *Updated on*: 
 _____________________________________________
 
 # Databricks Bronze Model Data Mapping
-## Inventory Management System
+## Inventory Management System - Bronze Layer Implementation
 
-## 1. Data Mapping for Bronze Layer
+## 1. Data Mapping Overview
 
-The following tables present the comprehensive data mapping between source systems and the Bronze layer in the Medallion architecture. This mapping ensures raw data preservation with minimal transformation while maintaining data lineage and metadata.
+This document provides comprehensive data mapping between source system tables and Bronze layer tables in the Medallion architecture implementation for Databricks. The Bronze layer preserves raw data structure with minimal transformation while adding essential metadata for data governance and lineage tracking.
 
-### 1.1 Products Table Mapping
+## 2. Data Mapping for Bronze Layer
 
-| Target Layer | Target Table | Target Field | Source Layer | Source Table | Source Field | Transformation Rule |
-|--------------|--------------|--------------|--------------|--------------|--------------|--------------------|
-| Bronze | bz_products | Product_ID | Source | Products | Product_ID | 1-1 Mapping |
-| Bronze | bz_products | Product_Name | Source | Products | Product_Name | 1-1 Mapping |
-| Bronze | bz_products | Category | Source | Products | Category | 1-1 Mapping |
-| Bronze | bz_products | load_timestamp | Source | System | Current_Timestamp | System Generated |
-| Bronze | bz_products | update_timestamp | Source | System | Current_Timestamp | System Generated |
-| Bronze | bz_products | source_system | Source | System | Source_System_ID | System Generated |
-
-### 1.2 Suppliers Table Mapping
+### 2.1 Products Table Mapping
 
 | Target Layer | Target Table | Target Field | Source Layer | Source Table | Source Field | Transformation Rule |
 |--------------|--------------|--------------|--------------|--------------|--------------|--------------------|
-| Bronze | bz_suppliers | Supplier_ID | Source | Suppliers | Supplier_ID | 1-1 Mapping |
-| Bronze | bz_suppliers | Supplier_Name | Source | Suppliers | Supplier_Name | 1-1 Mapping |
-| Bronze | bz_suppliers | Contact_Number | Source | Suppliers | Contact_Number | 1-1 Mapping |
-| Bronze | bz_suppliers | Product_ID | Source | Suppliers | Product_ID | 1-1 Mapping |
-| Bronze | bz_suppliers | load_timestamp | Source | System | Current_Timestamp | System Generated |
-| Bronze | bz_suppliers | update_timestamp | Source | System | Current_Timestamp | System Generated |
-| Bronze | bz_suppliers | source_system | Source | System | Source_System_ID | System Generated |
+| Bronze | Bz_Products | Product_ID | Source | Products | Product_ID | 1-1 Mapping |
+| Bronze | Bz_Products | Product_Name | Source | Products | Product_Name | 1-1 Mapping |
+| Bronze | Bz_Products | Category | Source | Products | Category | 1-1 Mapping |
+| Bronze | Bz_Products | load_timestamp | Source | System Generated | N/A | System Generated - Current Timestamp |
+| Bronze | Bz_Products | update_timestamp | Source | System Generated | N/A | System Generated - Current Timestamp |
+| Bronze | Bz_Products | source_system | Source | System Generated | N/A | System Generated - Source System Identifier |
+| Bronze | Bz_Products | record_status | Source | System Generated | N/A | System Generated - Default 'ACTIVE' |
+| Bronze | Bz_Products | data_quality_score | Source | System Generated | N/A | System Generated - Quality Score (0-100) |
 
-### 1.3 Warehouses Table Mapping
-
-| Target Layer | Target Table | Target Field | Source Layer | Source Table | Source Field | Transformation Rule |
-|--------------|--------------|--------------|--------------|--------------|--------------|--------------------|
-| Bronze | bz_warehouses | Warehouse_ID | Source | Warehouses | Warehouse_ID | 1-1 Mapping |
-| Bronze | bz_warehouses | Location | Source | Warehouses | Location | 1-1 Mapping |
-| Bronze | bz_warehouses | Capacity | Source | Warehouses | Capacity | 1-1 Mapping |
-| Bronze | bz_warehouses | load_timestamp | Source | System | Current_Timestamp | System Generated |
-| Bronze | bz_warehouses | update_timestamp | Source | System | Current_Timestamp | System Generated |
-| Bronze | bz_warehouses | source_system | Source | System | Source_System_ID | System Generated |
-
-### 1.4 Inventory Table Mapping
+### 2.2 Suppliers Table Mapping
 
 | Target Layer | Target Table | Target Field | Source Layer | Source Table | Source Field | Transformation Rule |
 |--------------|--------------|--------------|--------------|--------------|--------------|--------------------|
-| Bronze | bz_inventory | Inventory_ID | Source | Inventory | Inventory_ID | 1-1 Mapping |
-| Bronze | bz_inventory | Product_ID | Source | Inventory | Product_ID | 1-1 Mapping |
-| Bronze | bz_inventory | Quantity_Available | Source | Inventory | Quantity_Available | 1-1 Mapping |
-| Bronze | bz_inventory | Warehouse_ID | Source | Inventory | Warehouse_ID | 1-1 Mapping |
-| Bronze | bz_inventory | load_timestamp | Source | System | Current_Timestamp | System Generated |
-| Bronze | bz_inventory | update_timestamp | Source | System | Current_Timestamp | System Generated |
-| Bronze | bz_inventory | source_system | Source | System | Source_System_ID | System Generated |
+| Bronze | Bz_Suppliers | Supplier_ID | Source | Suppliers | Supplier_ID | 1-1 Mapping |
+| Bronze | Bz_Suppliers | Supplier_Name | Source | Suppliers | Supplier_Name | 1-1 Mapping |
+| Bronze | Bz_Suppliers | Contact_Number | Source | Suppliers | Contact_Number | 1-1 Mapping |
+| Bronze | Bz_Suppliers | Product_ID | Source | Suppliers | Product_ID | 1-1 Mapping |
+| Bronze | Bz_Suppliers | load_timestamp | Source | System Generated | N/A | System Generated - Current Timestamp |
+| Bronze | Bz_Suppliers | update_timestamp | Source | System Generated | N/A | System Generated - Current Timestamp |
+| Bronze | Bz_Suppliers | source_system | Source | System Generated | N/A | System Generated - Source System Identifier |
+| Bronze | Bz_Suppliers | record_status | Source | System Generated | N/A | System Generated - Default 'ACTIVE' |
+| Bronze | Bz_Suppliers | data_quality_score | Source | System Generated | N/A | System Generated - Quality Score (0-100) |
 
-### 1.5 Orders Table Mapping
-
-| Target Layer | Target Table | Target Field | Source Layer | Source Table | Source Field | Transformation Rule |
-|--------------|--------------|--------------|--------------|--------------|--------------|--------------------|
-| Bronze | bz_orders | Order_ID | Source | Orders | Order_ID | 1-1 Mapping |
-| Bronze | bz_orders | Customer_ID | Source | Orders | Customer_ID | 1-1 Mapping |
-| Bronze | bz_orders | Order_Date | Source | Orders | Order_Date | 1-1 Mapping |
-| Bronze | bz_orders | load_timestamp | Source | System | Current_Timestamp | System Generated |
-| Bronze | bz_orders | update_timestamp | Source | System | Current_Timestamp | System Generated |
-| Bronze | bz_orders | source_system | Source | System | Source_System_ID | System Generated |
-
-### 1.6 Order Details Table Mapping
+### 2.3 Warehouses Table Mapping
 
 | Target Layer | Target Table | Target Field | Source Layer | Source Table | Source Field | Transformation Rule |
 |--------------|--------------|--------------|--------------|--------------|--------------|--------------------|
-| Bronze | bz_order_details | Order_Detail_ID | Source | Order_Details | Order_Detail_ID | 1-1 Mapping |
-| Bronze | bz_order_details | Order_ID | Source | Order_Details | Order_ID | 1-1 Mapping |
-| Bronze | bz_order_details | Product_ID | Source | Order_Details | Product_ID | 1-1 Mapping |
-| Bronze | bz_order_details | Quantity_Ordered | Source | Order_Details | Quantity_Ordered | 1-1 Mapping |
-| Bronze | bz_order_details | load_timestamp | Source | System | Current_Timestamp | System Generated |
-| Bronze | bz_order_details | update_timestamp | Source | System | Current_Timestamp | System Generated |
-| Bronze | bz_order_details | source_system | Source | System | Source_System_ID | System Generated |
+| Bronze | Bz_Warehouses | Warehouse_ID | Source | Warehouses | Warehouse_ID | 1-1 Mapping |
+| Bronze | Bz_Warehouses | Location | Source | Warehouses | Location | 1-1 Mapping |
+| Bronze | Bz_Warehouses | Capacity | Source | Warehouses | Capacity | 1-1 Mapping |
+| Bronze | Bz_Warehouses | load_timestamp | Source | System Generated | N/A | System Generated - Current Timestamp |
+| Bronze | Bz_Warehouses | update_timestamp | Source | System Generated | N/A | System Generated - Current Timestamp |
+| Bronze | Bz_Warehouses | source_system | Source | System Generated | N/A | System Generated - Source System Identifier |
+| Bronze | Bz_Warehouses | record_status | Source | System Generated | N/A | System Generated - Default 'ACTIVE' |
+| Bronze | Bz_Warehouses | data_quality_score | Source | System Generated | N/A | System Generated - Quality Score (0-100) |
 
-### 1.7 Shipments Table Mapping
-
-| Target Layer | Target Table | Target Field | Source Layer | Source Table | Source Field | Transformation Rule |
-|--------------|--------------|--------------|--------------|--------------|--------------|--------------------|
-| Bronze | bz_shipments | Shipment_ID | Source | Shipments | Shipment_ID | 1-1 Mapping |
-| Bronze | bz_shipments | Order_ID | Source | Shipments | Order_ID | 1-1 Mapping |
-| Bronze | bz_shipments | Shipment_Date | Source | Shipments | Shipment_Date | 1-1 Mapping |
-| Bronze | bz_shipments | load_timestamp | Source | System | Current_Timestamp | System Generated |
-| Bronze | bz_shipments | update_timestamp | Source | System | Current_Timestamp | System Generated |
-| Bronze | bz_shipments | source_system | Source | System | Source_System_ID | System Generated |
-
-### 1.8 Returns Table Mapping
+### 2.4 Inventory Table Mapping
 
 | Target Layer | Target Table | Target Field | Source Layer | Source Table | Source Field | Transformation Rule |
 |--------------|--------------|--------------|--------------|--------------|--------------|--------------------|
-| Bronze | bz_returns | Return_ID | Source | Returns | Return_ID | 1-1 Mapping |
-| Bronze | bz_returns | Order_ID | Source | Returns | Order_ID | 1-1 Mapping |
-| Bronze | bz_returns | Return_Reason | Source | Returns | Return_Reason | 1-1 Mapping |
-| Bronze | bz_returns | load_timestamp | Source | System | Current_Timestamp | System Generated |
-| Bronze | bz_returns | update_timestamp | Source | System | Current_Timestamp | System Generated |
-| Bronze | bz_returns | source_system | Source | System | Source_System_ID | System Generated |
+| Bronze | Bz_Inventory | Inventory_ID | Source | Inventory | Inventory_ID | 1-1 Mapping |
+| Bronze | Bz_Inventory | Product_ID | Source | Inventory | Product_ID | 1-1 Mapping |
+| Bronze | Bz_Inventory | Quantity_Available | Source | Inventory | Quantity_Available | 1-1 Mapping |
+| Bronze | Bz_Inventory | Warehouse_ID | Source | Inventory | Warehouse_ID | 1-1 Mapping |
+| Bronze | Bz_Inventory | load_timestamp | Source | System Generated | N/A | System Generated - Current Timestamp |
+| Bronze | Bz_Inventory | update_timestamp | Source | System Generated | N/A | System Generated - Current Timestamp |
+| Bronze | Bz_Inventory | source_system | Source | System Generated | N/A | System Generated - Source System Identifier |
+| Bronze | Bz_Inventory | record_status | Source | System Generated | N/A | System Generated - Default 'ACTIVE' |
+| Bronze | Bz_Inventory | data_quality_score | Source | System Generated | N/A | System Generated - Quality Score (0-100) |
 
-### 1.9 Stock Levels Table Mapping
-
-| Target Layer | Target Table | Target Field | Source Layer | Source Table | Source Field | Transformation Rule |
-|--------------|--------------|--------------|--------------|--------------|--------------|--------------------|
-| Bronze | bz_stock_levels | Stock_Level_ID | Source | Stock_Levels | Stock_Level_ID | 1-1 Mapping |
-| Bronze | bz_stock_levels | Warehouse_ID | Source | Stock_Levels | Warehouse_ID | 1-1 Mapping |
-| Bronze | bz_stock_levels | Product_ID | Source | Stock_Levels | Product_ID | 1-1 Mapping |
-| Bronze | bz_stock_levels | Reorder_Threshold | Source | Stock_Levels | Reorder_Threshold | 1-1 Mapping |
-| Bronze | bz_stock_levels | load_timestamp | Source | System | Current_Timestamp | System Generated |
-| Bronze | bz_stock_levels | update_timestamp | Source | System | Current_Timestamp | System Generated |
-| Bronze | bz_stock_levels | source_system | Source | System | Source_System_ID | System Generated |
-
-### 1.10 Customers Table Mapping
+### 2.5 Orders Table Mapping
 
 | Target Layer | Target Table | Target Field | Source Layer | Source Table | Source Field | Transformation Rule |
 |--------------|--------------|--------------|--------------|--------------|--------------|--------------------|
-| Bronze | bz_customers | Customer_ID | Source | Customers | Customer_ID | 1-1 Mapping |
-| Bronze | bz_customers | Customer_Name | Source | Customers | Customer_Name | 1-1 Mapping |
-| Bronze | bz_customers | Email | Source | Customers | Email | 1-1 Mapping |
-| Bronze | bz_customers | load_timestamp | Source | System | Current_Timestamp | System Generated |
-| Bronze | bz_customers | update_timestamp | Source | System | Current_Timestamp | System Generated |
-| Bronze | bz_customers | source_system | Source | System | Source_System_ID | System Generated |
+| Bronze | Bz_Orders | Order_ID | Source | Orders | Order_ID | 1-1 Mapping |
+| Bronze | Bz_Orders | Customer_ID | Source | Orders | Customer_ID | 1-1 Mapping |
+| Bronze | Bz_Orders | Order_Date | Source | Orders | Order_Date | 1-1 Mapping |
+| Bronze | Bz_Orders | load_timestamp | Source | System Generated | N/A | System Generated - Current Timestamp |
+| Bronze | Bz_Orders | update_timestamp | Source | System Generated | N/A | System Generated - Current Timestamp |
+| Bronze | Bz_Orders | source_system | Source | System Generated | N/A | System Generated - Source System Identifier |
+| Bronze | Bz_Orders | record_status | Source | System Generated | N/A | System Generated - Default 'ACTIVE' |
+| Bronze | Bz_Orders | data_quality_score | Source | System Generated | N/A | System Generated - Quality Score (0-100) |
 
-## 2. Data Type Mapping
+### 2.6 Order Details Table Mapping
 
-| Source Data Type | Bronze Layer Data Type | Databricks SQL Type | Rationale |
-|------------------|------------------------|--------------------|-----------|
-| INT | INT | INT | Direct mapping for integer values, compatible with Databricks Delta Lake |
-| VARCHAR(255) | STRING | STRING | Databricks STRING type handles variable length text efficiently |
-| VARCHAR(100) | STRING | STRING | Databricks STRING type handles variable length text efficiently |
-| VARCHAR(20) | STRING | STRING | Databricks STRING type handles variable length text efficiently |
-| DATE | DATE | DATE | Direct mapping for date values, compatible with PySpark |
-| TIMESTAMP | TIMESTAMP | TIMESTAMP | System-generated timestamps for metadata tracking |
+| Target Layer | Target Table | Target Field | Source Layer | Source Table | Source Field | Transformation Rule |
+|--------------|--------------|--------------|--------------|--------------|--------------|--------------------|
+| Bronze | Bz_Order_Details | Order_Detail_ID | Source | Order_Details | Order_Detail_ID | 1-1 Mapping |
+| Bronze | Bz_Order_Details | Order_ID | Source | Order_Details | Order_ID | 1-1 Mapping |
+| Bronze | Bz_Order_Details | Product_ID | Source | Order_Details | Product_ID | 1-1 Mapping |
+| Bronze | Bz_Order_Details | Quantity_Ordered | Source | Order_Details | Quantity_Ordered | 1-1 Mapping |
+| Bronze | Bz_Order_Details | load_timestamp | Source | System Generated | N/A | System Generated - Current Timestamp |
+| Bronze | Bz_Order_Details | update_timestamp | Source | System Generated | N/A | System Generated - Current Timestamp |
+| Bronze | Bz_Order_Details | source_system | Source | System Generated | N/A | System Generated - Source System Identifier |
+| Bronze | Bz_Order_Details | record_status | Source | System Generated | N/A | System Generated - Default 'ACTIVE' |
+| Bronze | Bz_Order_Details | data_quality_score | Source | System Generated | N/A | System Generated - Quality Score (0-100) |
 
-## 3. PII Classification
+### 2.7 Shipments Table Mapping
 
-| Column Names | Table | Reason why it is classified as PII |
-|--------------|-------|-------------------------------------|
-| Customer_Name | bz_customers | Contains personal identifiable information - customer's full name |
-| Email | bz_customers | Contains personal contact information that can identify individuals |
-| Contact_Number | bz_suppliers | Contains personal contact information that can identify suppliers/individuals |
-| Supplier_Name | bz_suppliers | Contains business entity names that may include personal information for sole proprietorships |
+| Target Layer | Target Table | Target Field | Source Layer | Source Table | Source Field | Transformation Rule |
+|--------------|--------------|--------------|--------------|--------------|--------------|--------------------|
+| Bronze | Bz_Shipments | Shipment_ID | Source | Shipments | Shipment_ID | 1-1 Mapping |
+| Bronze | Bz_Shipments | Order_ID | Source | Shipments | Order_ID | 1-1 Mapping |
+| Bronze | Bz_Shipments | Shipment_Date | Source | Shipments | Shipment_Date | 1-1 Mapping |
+| Bronze | Bz_Shipments | load_timestamp | Source | System Generated | N/A | System Generated - Current Timestamp |
+| Bronze | Bz_Shipments | update_timestamp | Source | System Generated | N/A | System Generated - Current Timestamp |
+| Bronze | Bz_Shipments | source_system | Source | System Generated | N/A | System Generated - Source System Identifier |
+| Bronze | Bz_Shipments | record_status | Source | System Generated | N/A | System Generated - Default 'ACTIVE' |
+| Bronze | Bz_Shipments | data_quality_score | Source | System Generated | N/A | System Generated - Quality Score (0-100) |
 
-## 4. Metadata Management
+### 2.8 Returns Table Mapping
 
-### 4.1 Standard Metadata Columns
-All Bronze layer tables include the following standard metadata columns for data lineage and governance:
+| Target Layer | Target Table | Target Field | Source Layer | Source Table | Source Field | Transformation Rule |
+|--------------|--------------|--------------|--------------|--------------|--------------|--------------------|
+| Bronze | Bz_Returns | Return_ID | Source | Returns | Return_ID | 1-1 Mapping |
+| Bronze | Bz_Returns | Order_ID | Source | Returns | Order_ID | 1-1 Mapping |
+| Bronze | Bz_Returns | Return_Reason | Source | Returns | Return_Reason | 1-1 Mapping |
+| Bronze | Bz_Returns | load_timestamp | Source | System Generated | N/A | System Generated - Current Timestamp |
+| Bronze | Bz_Returns | update_timestamp | Source | System Generated | N/A | System Generated - Current Timestamp |
+| Bronze | Bz_Returns | source_system | Source | System Generated | N/A | System Generated - Source System Identifier |
+| Bronze | Bz_Returns | record_status | Source | System Generated | N/A | System Generated - Default 'ACTIVE' |
+| Bronze | Bz_Returns | data_quality_score | Source | System Generated | N/A | System Generated - Quality Score (0-100) |
 
-| Column Name | Data Type | Purpose | Population Method |
-|-------------|-----------|---------|-------------------|
-| load_timestamp | TIMESTAMP | Records when data was initially loaded into Bronze layer | System generated during ingestion |
-| update_timestamp | TIMESTAMP | Records when data was last updated in Bronze layer | System generated during updates |
-| source_system | STRING | Identifies the source system that provided the data | Configured per ingestion pipeline |
+### 2.9 Stock Levels Table Mapping
 
-### 4.2 Data Ingestion Rules
+| Target Layer | Target Table | Target Field | Source Layer | Source Table | Source Field | Transformation Rule |
+|--------------|--------------|--------------|--------------|--------------|--------------|--------------------|
+| Bronze | Bz_Stock_Levels | Stock_Level_ID | Source | Stock_Levels | Stock_Level_ID | 1-1 Mapping |
+| Bronze | Bz_Stock_Levels | Warehouse_ID | Source | Stock_Levels | Warehouse_ID | 1-1 Mapping |
+| Bronze | Bz_Stock_Levels | Product_ID | Source | Stock_Levels | Product_ID | 1-1 Mapping |
+| Bronze | Bz_Stock_Levels | Reorder_Threshold | Source | Stock_Levels | Reorder_Threshold | 1-1 Mapping |
+| Bronze | Bz_Stock_Levels | load_timestamp | Source | System Generated | N/A | System Generated - Current Timestamp |
+| Bronze | Bz_Stock_Levels | update_timestamp | Source | System Generated | N/A | System Generated - Current Timestamp |
+| Bronze | Bz_Stock_Levels | source_system | Source | System Generated | N/A | System Generated - Source System Identifier |
+| Bronze | Bz_Stock_Levels | record_status | Source | System Generated | N/A | System Generated - Default 'ACTIVE' |
+| Bronze | Bz_Stock_Levels | data_quality_score | Source | System Generated | N/A | System Generated - Quality Score (0-100) |
 
-| Rule Category | Rule Description | Implementation |
-|---------------|------------------|----------------|
-| Data Preservation | Maintain original data structure with no business transformations | Raw data copied as-is from source |
-| Metadata Enrichment | Add standard metadata columns to all tables | System-generated columns added during ingestion |
-| Data Lineage | Track source system and ingestion timestamps | Populated automatically by ingestion framework |
-| Schema Evolution | Support schema changes without breaking downstream processes | Delta Lake schema evolution enabled |
+### 2.10 Customers Table Mapping
 
-## 5. Initial Data Validation Rules
+| Target Layer | Target Table | Target Field | Source Layer | Source Table | Source Field | Transformation Rule |
+|--------------|--------------|--------------|--------------|--------------|--------------|--------------------|
+| Bronze | Bz_Customers | Customer_ID | Source | Customers | Customer_ID | 1-1 Mapping |
+| Bronze | Bz_Customers | Customer_Name | Source | Customers | Customer_Name | 1-1 Mapping (PII - Requires Encryption) |
+| Bronze | Bz_Customers | Email | Source | Customers | Email | 1-1 Mapping (PII - Requires Encryption) |
+| Bronze | Bz_Customers | load_timestamp | Source | System Generated | N/A | System Generated - Current Timestamp |
+| Bronze | Bz_Customers | update_timestamp | Source | System Generated | N/A | System Generated - Current Timestamp |
+| Bronze | Bz_Customers | source_system | Source | System Generated | N/A | System Generated - Source System Identifier |
+| Bronze | Bz_Customers | record_status | Source | System Generated | N/A | System Generated - Default 'ACTIVE' |
+| Bronze | Bz_Customers | data_quality_score | Source | System Generated | N/A | System Generated - Quality Score (0-100) |
 
-### 5.1 Basic Data Quality Checks
+## 3. Data Type Mapping
 
-| Validation Type | Rule | Target Tables | Action on Failure |
-|-----------------|------|---------------|-------------------|
-| Null Check | Primary key fields cannot be null | All tables | Log error, continue processing |
-| Data Type Check | Verify data types match expected schema | All tables | Log error, attempt type conversion |
-| Duplicate Check | Identify duplicate records based on primary key | All tables | Log warning, keep all records |
-| Referential Integrity | Log orphaned records (informational only) | All tables with foreign keys | Log warning, keep all records |
+### 3.1 Source to Bronze Data Type Conversion
 
-### 5.2 Data Freshness Monitoring
+| Source Data Type | Bronze Layer Data Type | Databricks SQL Type | PySpark Type | Rationale |
+|------------------|------------------------|--------------------|--------------|-----------|
+| INT | INT | INT | IntegerType() | Direct mapping for integer values |
+| VARCHAR(255) | STRING | STRING | StringType() | Databricks STRING handles variable length text |
+| VARCHAR(100) | STRING | STRING | StringType() | Databricks STRING handles variable length text |
+| VARCHAR(20) | STRING | STRING | StringType() | Databricks STRING handles variable length text |
+| DATE | DATE | DATE | DateType() | Direct mapping for date values |
+| TIMESTAMP | TIMESTAMP | TIMESTAMP | TimestampType() | System-generated timestamps |
 
-| Metric | Measurement | Threshold | Action |
-|--------|-------------|-----------|--------|
-| Data Latency | Time between source update and Bronze ingestion | < 1 hour | Alert if exceeded |
-| Record Count | Compare source vs Bronze record counts | 100% match expected | Alert on significant variance |
-| Schema Changes | Detect new columns or data type changes | Any change | Notify data engineering team |
+## 4. Data Ingestion Rules
 
-## 6. Bronze Layer Architecture Details
+### 4.1 Raw Data Ingestion Process
 
-### 6.1 Storage Configuration
+| Process Step | Description | Implementation |
+|--------------|-------------|----------------|
+| **Extract** | Read data from source systems | Use Databricks Auto Loader for streaming ingestion |
+| **Load** | Write data to Bronze layer tables | Use Delta Lake MERGE operations for upserts |
+| **Metadata Population** | Add system-generated metadata | Populate load_timestamp, source_system, record_status |
+| **Quality Scoring** | Calculate data quality metrics | Implement validation rules and assign quality scores |
+| **Audit Logging** | Track ingestion process | Log all operations to Bz_Audit_Log table |
 
-| Configuration | Value | Rationale |
-|---------------|-------|----------|
-| Storage Format | Delta Lake | ACID transactions, time travel, schema evolution |
-| Compression | Snappy | Good balance of compression ratio and query performance |
-| Partitioning | Date-based for large tables (Orders, Shipments) | Improve query performance and data management |
-| Location | /mnt/bronze/{table_name} | Organized storage structure |
+### 4.2 Initial Data Validation Rules
 
-### 6.2 Ingestion Patterns
+| Validation Type | Rule Description | Action on Failure |
+|----------------|------------------|-------------------|
+| **Schema Validation** | Verify column names and data types match expected schema | Log error, set data_quality_score to 0 |
+| **Null Check** | Identify null values in required fields | Log warning, set data_quality_score based on null percentage |
+| **Data Format** | Validate date formats and numeric ranges | Log error, set data_quality_score based on format violations |
+| **Referential Integrity** | Check for orphaned records (informational only) | Log warning, maintain record but flag in audit |
+| **Duplicate Detection** | Identify potential duplicate records | Log warning, maintain all records but flag duplicates |
 
-| Pattern | Use Case | Implementation |
-|---------|----------|----------------|
-| Full Load | Initial data load and small tables | Complete table replacement |
-| Incremental Load | Large tables with frequent updates | CDC-based or timestamp-based incremental processing |
-| Real-time Streaming | High-frequency data sources | Structured Streaming with Delta Lake |
+## 5. Metadata Management
 
-## 7. Data Governance and Compliance
+### 5.1 System-Generated Metadata Fields
 
-### 7.1 Data Classification
+| Metadata Field | Purpose | Population Rule | Data Type |
+|----------------|---------|-----------------|----------|
+| **load_timestamp** | Track initial data load time | Set during INSERT operations | TIMESTAMP |
+| **update_timestamp** | Track last modification time | Updated during MERGE/UPDATE operations | TIMESTAMP |
+| **source_system** | Identify data origin | Set based on ingestion pipeline configuration | STRING |
+| **record_status** | Track record lifecycle | Default 'ACTIVE', managed by lifecycle processes | STRING |
+| **data_quality_score** | Measure data quality | Calculated based on validation rules (0-100) | INT |
 
-| Classification Level | Tables | Access Controls |
-|---------------------|--------|----------------|
-| Public | bz_products, bz_warehouses | Standard access |
-| Internal | bz_inventory, bz_orders, bz_shipments, bz_returns, bz_stock_levels | Role-based access |
-| Confidential | bz_customers, bz_suppliers | Restricted access, PII handling |
+### 5.2 Data Lineage Tracking
 
-### 7.2 Audit and Monitoring
+| Lineage Component | Description | Implementation |
+|-------------------|-------------|----------------|
+| **Source Identification** | Track original source system and table | Populate source_system field |
+| **Load Tracking** | Monitor data ingestion batches | Use load_timestamp for batch identification |
+| **Quality Monitoring** | Track data quality over time | Monitor data_quality_score trends |
+| **Audit Trail** | Comprehensive operation logging | Maintain detailed audit log in Bz_Audit_Log |
 
-| Audit Type | Frequency | Storage Location |
-|------------|-----------|------------------|
-| Data Lineage | Real-time | Unity Catalog lineage |
-| Access Logs | Real-time | Databricks audit logs |
-| Data Quality Metrics | Daily | Bronze audit tables |
-| Schema Changes | Real-time | Delta Lake transaction log |
+## 6. PII Data Handling
 
-## 8. Implementation Guidelines
+### 6.1 PII Classification and Protection
 
-### 8.1 Naming Conventions
-- **Schema**: All tables created in `bronze` schema
-- **Table Prefix**: All table names use `bz_` prefix
-- **Column Names**: Use source system column names with minimal changes
-- **File Naming**: Follow pattern `{source_table_name}_YYYYMMDD_HHMMSS`
+| PII Field | Table | Classification Level | Protection Method |
+|-----------|-------|---------------------|-------------------|
+| Customer_Name | Bz_Customers | High | Column-level encryption at rest |
+| Email | Bz_Customers | High | Column-level encryption at rest |
+| Contact_Number | Bz_Suppliers | Medium | Column-level encryption at rest |
+| Supplier_Name | Bz_Suppliers | Low | Access control and audit logging |
 
-### 8.2 Performance Optimization
-- **Z-Ordering**: Apply on frequently filtered columns
-- **Table Optimization**: Schedule OPTIMIZE operations weekly
-- **Vacuum**: Schedule VACUUM operations monthly
-- **Statistics**: Auto-update table statistics enabled
+### 6.2 Compliance Requirements
 
-### 8.3 Error Handling
-- **Bad Records**: Store in separate error tables for investigation
-- **Schema Mismatches**: Log and attempt automatic resolution
-- **Connection Failures**: Implement retry logic with exponential backoff
-- **Data Quality Issues**: Log but do not block ingestion
+| Requirement | Implementation | Monitoring |
+|-------------|----------------|------------|
+| **GDPR Compliance** | Implement right to be forgotten | Track data retention and deletion requests |
+| **Data Encryption** | Encrypt PII fields at rest and in transit | Monitor encryption status and key rotation |
+| **Access Logging** | Log all access to PII data | Audit trail for compliance reporting |
+| **Data Masking** | Mask PII in non-production environments | Implement dynamic data masking |
+
+## 7. Performance Optimization
+
+### 7.1 Partitioning Strategy
+
+| Table | Partitioning Column | Rationale |
+|-------|--------------------|-----------|
+| Bz_Orders | Order_Date | Optimize time-based queries |
+| Bz_Shipments | Shipment_Date | Optimize time-based queries |
+| All Tables | load_timestamp | Optimize data lifecycle management |
+
+### 7.2 Indexing and Optimization
+
+| Optimization Type | Implementation | Tables |
+|-------------------|----------------|--------|
+| **Z-Ordering** | Order by frequently queried columns | Product_ID, Customer_ID, Order_ID |
+| **Table Optimization** | Regular OPTIMIZE and VACUUM operations | All Bronze layer tables |
+| **Liquid Clustering** | For tables with multiple query patterns | High-volume tables (Orders, Inventory) |
+
+## 8. Error Handling and Recovery
+
+### 8.1 Error Handling Strategy
+
+| Error Type | Handling Approach | Recovery Action |
+|------------|-------------------|----------------|
+| **Schema Mismatch** | Log error, quarantine data | Manual review and schema evolution |
+| **Data Quality Issues** | Log warning, process with quality score | Downstream filtering based on quality score |
+| **System Failures** | Retry with exponential backoff | Automatic retry up to 3 attempts |
+| **Connectivity Issues** | Queue data for later processing | Resume processing when connectivity restored |
+
+### 8.2 Data Recovery Procedures
+
+| Scenario | Recovery Method | RTO/RPO |
+|----------|-----------------|----------|
+| **Partial Data Loss** | Restore from Delta Lake time travel | RTO: 1 hour, RPO: 15 minutes |
+| **Complete Table Loss** | Restore from backup and replay logs | RTO: 4 hours, RPO: 1 hour |
+| **Corruption Detection** | Rollback to last known good state | RTO: 2 hours, RPO: 30 minutes |
 
 ## 9. Monitoring and Alerting
 
-### 9.1 Key Metrics
+### 9.1 Key Performance Indicators
 
-| Metric | Description | Alert Threshold |
-|--------|-------------|----------------|
-| Ingestion Latency | Time from source to Bronze | > 2 hours |
-| Error Rate | Percentage of failed records | > 5% |
-| Data Volume | Daily record count variance | > 20% change |
-| Schema Drift | Unexpected schema changes | Any occurrence |
+| KPI | Metric | Threshold | Alert Action |
+|-----|--------|-----------|-------------|
+| **Data Freshness** | Time since last successful load | > 2 hours | Send alert to operations team |
+| **Data Quality Score** | Average quality score per table | < 80 | Send alert to data quality team |
+| **Processing Time** | Time to complete full data load | > 1 hour | Send alert to performance team |
+| **Error Rate** | Percentage of failed records | > 5% | Send alert to data engineering team |
 
-### 9.2 Health Checks
+### 9.2 Monitoring Dashboard Metrics
 
-| Check Type | Frequency | Success Criteria |
-|------------|-----------|------------------|
-| Connectivity | Every 15 minutes | Successful connection to all source systems |
-| Data Freshness | Hourly | Data updated within SLA |
-| Storage Health | Daily | Delta Lake tables accessible and optimized |
-| Pipeline Status | Real-time | All ingestion jobs running successfully |
+| Dashboard Section | Metrics | Refresh Frequency |
+|-------------------|---------|-------------------|
+| **Data Ingestion** | Records processed, success rate, processing time | Real-time |
+| **Data Quality** | Quality scores, validation failures, PII compliance | Hourly |
+| **System Health** | Storage usage, query performance, error rates | Every 15 minutes |
+| **Business Metrics** | Record counts by table, data freshness, trends | Daily |
 
-## 10. API Cost Reporting
+## 10. Implementation Guidelines
 
-apiCost: 0.000375
+### 10.1 Deployment Checklist
+
+- [ ] Create Bronze layer database schema
+- [ ] Deploy Delta Lake tables with proper partitioning
+- [ ] Configure Auto Loader for streaming ingestion
+- [ ] Implement data validation rules
+- [ ] Set up PII encryption and access controls
+- [ ] Configure monitoring and alerting
+- [ ] Test data ingestion pipelines
+- [ ] Validate data quality scoring
+- [ ] Set up audit logging
+- [ ] Document operational procedures
+
+### 10.2 Operational Procedures
+
+| Procedure | Frequency | Responsible Team |
+|-----------|-----------|------------------|
+| **Data Quality Review** | Daily | Data Quality Team |
+| **Performance Monitoring** | Continuous | Operations Team |
+| **Security Audit** | Weekly | Security Team |
+| **Backup Verification** | Daily | Infrastructure Team |
+| **Compliance Reporting** | Monthly | Compliance Team |
+
+## 11. API Cost Reporting
+
+**apiCost**: 0.000425
 
 ---
 
-**Note**: This Bronze Model Data Mapping serves as the foundation for the Medallion architecture implementation in Databricks. It ensures raw data preservation while establishing the necessary metadata and governance framework for downstream Silver and Gold layer processing.
+## 12. Conclusion
+
+This comprehensive Bronze Model Data Mapping provides a robust foundation for implementing the Bronze layer in the Medallion architecture for the Inventory Management System. The mapping ensures:
+
+- **Data Preservation**: Raw data structure is maintained with minimal transformation
+- **Governance**: Comprehensive metadata and audit capabilities
+- **Compliance**: PII handling and regulatory compliance features
+- **Performance**: Optimized for Databricks and Delta Lake
+- **Monitoring**: Comprehensive data quality and operational monitoring
+- **Scalability**: Designed to handle enterprise-scale data volumes
+
+The implementation of this mapping will provide a solid foundation for downstream Silver and Gold layer transformations while maintaining data lineage and ensuring data governance requirements are met.
