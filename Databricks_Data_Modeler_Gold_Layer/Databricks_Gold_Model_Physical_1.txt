@@ -1,58 +1,52 @@
-=============================================
-Author:        Ascendion AVA+
-Created on:   
-Description:   Comprehensive Physical Data Model for Gold Layer of Medallion Architecture - Inventory Management Reports
-=============================================
+_____________________________________________
+## *Author*: AAVA
+## *Created on*: 
+## *Description*: Gold Layer Physical Data Model for Inventory Management Reports with dimensional modeling, audit and error tracking capabilities
+## *Version*: 1 
+## *Updated on*: 
+_____________________________________________
 
-# Databricks Gold Layer Physical Data Model
-## Inventory Management Reports - Physical Implementation
+# Databricks Gold Layer Physical Data Model - Inventory Management
 
-### Version: 1.0
-### Compatible with: Databricks Spark SQL
-### Storage Format: Delta Lake
+## 1. Gold Layer Physical Model DDL Scripts
 
----
+### 1.1 Fact Tables DDL Scripts
 
-## 1. GOLD LAYER DDL SCRIPTS
-
-### 1.1 FACT TABLES
-
-#### 1.1.1 Go_Inventory_Movement_Fact
+#### Go_Inventory_Movement_Fact
 ```sql
 CREATE TABLE IF NOT EXISTS Go_Inventory_Movement_Fact (
     inventory_movement_id BIGINT,
-    inventory_movement_key STRING,
-    product_key STRING,
-    warehouse_key STRING,
-    supplier_key STRING,
-    movement_date_key STRING,
-    movement_type STRING,
+    inventory_movement_key BIGINT,
+    product_key BIGINT,
+    warehouse_key BIGINT,
+    supplier_key BIGINT,
+    date_key INT,
+    movement_type VARCHAR(50),
     quantity_moved DECIMAL(15,2),
     unit_cost DECIMAL(10,2),
-    total_cost DECIMAL(15,2),
-    reference_number STRING,
-    movement_reason STRING,
+    total_value DECIMAL(15,2),
+    reference_number VARCHAR(100),
     load_date TIMESTAMP,
     update_date TIMESTAMP,
-    source_system STRING
+    source_system VARCHAR(50)
 )
 USING DELTA
-PARTITIONED BY (movement_date_key)
+PARTITIONED BY (date_key)
 TBLPROPERTIES (
     'delta.autoOptimize.optimizeWrite' = 'true',
     'delta.autoOptimize.autoCompact' = 'true'
 );
 ```
 
-#### 1.1.2 Go_Sales_Fact
+#### Go_Sales_Fact
 ```sql
 CREATE TABLE IF NOT EXISTS Go_Sales_Fact (
-    sales_fact_id BIGINT,
-    sales_transaction_key STRING,
-    product_key STRING,
-    customer_key STRING,
-    warehouse_key STRING,
-    sales_date_key STRING,
+    sales_id BIGINT,
+    sales_key BIGINT,
+    product_key BIGINT,
+    customer_key BIGINT,
+    warehouse_key BIGINT,
+    date_key INT,
     quantity_sold DECIMAL(15,2),
     unit_price DECIMAL(10,2),
     total_sales_amount DECIMAL(15,2),
@@ -61,242 +55,223 @@ CREATE TABLE IF NOT EXISTS Go_Sales_Fact (
     net_sales_amount DECIMAL(15,2),
     load_date TIMESTAMP,
     update_date TIMESTAMP,
-    source_system STRING
+    source_system VARCHAR(50)
 )
 USING DELTA
-PARTITIONED BY (sales_date_key)
+PARTITIONED BY (date_key)
 TBLPROPERTIES (
     'delta.autoOptimize.optimizeWrite' = 'true',
     'delta.autoOptimize.autoCompact' = 'true'
 );
 ```
 
-### 1.2 DIMENSION TABLES
+### 1.2 Dimension Tables DDL Scripts
 
-#### 1.2.1 Go_Product_Dimension
+#### Go_Product_Dimension
 ```sql
 CREATE TABLE IF NOT EXISTS Go_Product_Dimension (
-    product_dimension_id BIGINT,
-    product_key STRING,
-    product_code STRING,
-    product_name STRING,
-    product_description STRING,
-    category_name STRING,
-    subcategory_name STRING,
-    brand_name STRING,
-    unit_of_measure STRING,
+    product_id BIGINT,
+    product_key BIGINT,
+    product_code VARCHAR(50),
+    product_name VARCHAR(200),
+    product_description VARCHAR(500),
+    category_name VARCHAR(100),
+    subcategory_name VARCHAR(100),
+    brand_name VARCHAR(100),
+    unit_of_measure VARCHAR(20),
     standard_cost DECIMAL(10,2),
     list_price DECIMAL(10,2),
-    product_status STRING,
+    product_status VARCHAR(20),
     effective_start_date DATE,
     effective_end_date DATE,
-    is_current_record BOOLEAN,
+    is_current BOOLEAN,
     load_date TIMESTAMP,
     update_date TIMESTAMP,
-    source_system STRING
+    source_system VARCHAR(50)
 )
 USING DELTA
-PARTITIONED BY (product_status)
 TBLPROPERTIES (
     'delta.autoOptimize.optimizeWrite' = 'true',
     'delta.autoOptimize.autoCompact' = 'true'
 );
 ```
 
-#### 1.2.2 Go_Warehouse_Dimension
+#### Go_Warehouse_Dimension
 ```sql
 CREATE TABLE IF NOT EXISTS Go_Warehouse_Dimension (
-    warehouse_dimension_id BIGINT,
-    warehouse_key STRING,
-    warehouse_code STRING,
-    warehouse_name STRING,
-    warehouse_type STRING,
-    address_line1 STRING,
-    address_line2 STRING,
-    city STRING,
-    state_province STRING,
-    postal_code STRING,
-    country STRING,
-    warehouse_manager STRING,
-    contact_phone STRING,
-    contact_email STRING,
-    warehouse_status STRING,
+    warehouse_id BIGINT,
+    warehouse_key BIGINT,
+    warehouse_code VARCHAR(50),
+    warehouse_name VARCHAR(200),
+    warehouse_type VARCHAR(50),
+    address_line1 VARCHAR(200),
+    address_line2 VARCHAR(200),
+    city VARCHAR(100),
+    state_province VARCHAR(100),
+    postal_code VARCHAR(20),
+    country VARCHAR(100),
+    warehouse_manager VARCHAR(100),
+    contact_phone VARCHAR(20),
+    contact_email VARCHAR(100),
+    warehouse_status VARCHAR(20),
     effective_start_date DATE,
     effective_end_date DATE,
-    is_current_record BOOLEAN,
+    is_current BOOLEAN,
     load_date TIMESTAMP,
     update_date TIMESTAMP,
-    source_system STRING
+    source_system VARCHAR(50)
 )
 USING DELTA
-PARTITIONED BY (country)
 TBLPROPERTIES (
     'delta.autoOptimize.optimizeWrite' = 'true',
     'delta.autoOptimize.autoCompact' = 'true'
 );
 ```
 
-#### 1.2.3 Go_Supplier_Dimension
+#### Go_Supplier_Dimension
 ```sql
 CREATE TABLE IF NOT EXISTS Go_Supplier_Dimension (
-    supplier_dimension_id BIGINT,
-    supplier_key STRING,
-    supplier_code STRING,
-    supplier_name STRING,
-    supplier_type STRING,
-    contact_person STRING,
-    contact_phone STRING,
-    contact_email STRING,
-    address_line1 STRING,
-    address_line2 STRING,
-    city STRING,
-    state_province STRING,
-    postal_code STRING,
-    country STRING,
-    payment_terms STRING,
-    supplier_rating STRING,
-    supplier_status STRING,
+    supplier_id BIGINT,
+    supplier_key BIGINT,
+    supplier_code VARCHAR(50),
+    supplier_name VARCHAR(200),
+    supplier_type VARCHAR(50),
+    contact_person VARCHAR(100),
+    contact_phone VARCHAR(20),
+    contact_email VARCHAR(100),
+    address_line1 VARCHAR(200),
+    address_line2 VARCHAR(200),
+    city VARCHAR(100),
+    state_province VARCHAR(100),
+    postal_code VARCHAR(20),
+    country VARCHAR(100),
+    payment_terms VARCHAR(100),
+    supplier_rating VARCHAR(20),
+    supplier_status VARCHAR(20),
     effective_start_date DATE,
     effective_end_date DATE,
-    is_current_record BOOLEAN,
+    is_current BOOLEAN,
     load_date TIMESTAMP,
     update_date TIMESTAMP,
-    source_system STRING
+    source_system VARCHAR(50)
 )
 USING DELTA
-PARTITIONED BY (country)
 TBLPROPERTIES (
     'delta.autoOptimize.optimizeWrite' = 'true',
     'delta.autoOptimize.autoCompact' = 'true'
 );
 ```
 
-#### 1.2.4 Go_Customer_Dimension
+#### Go_Customer_Dimension
 ```sql
 CREATE TABLE IF NOT EXISTS Go_Customer_Dimension (
-    customer_dimension_id BIGINT,
-    customer_key STRING,
-    customer_code STRING,
-    customer_name STRING,
-    customer_type STRING,
-    contact_person STRING,
-    contact_phone STRING,
-    contact_email STRING,
-    address_line1 STRING,
-    address_line2 STRING,
-    city STRING,
-    state_province STRING,
-    postal_code STRING,
-    country STRING,
-    customer_segment STRING,
+    customer_id BIGINT,
+    customer_key BIGINT,
+    customer_code VARCHAR(50),
+    customer_name VARCHAR(200),
+    customer_type VARCHAR(50),
+    contact_person VARCHAR(100),
+    contact_phone VARCHAR(20),
+    contact_email VARCHAR(100),
+    address_line1 VARCHAR(200),
+    address_line2 VARCHAR(200),
+    city VARCHAR(100),
+    state_province VARCHAR(100),
+    postal_code VARCHAR(20),
+    country VARCHAR(100),
     credit_limit DECIMAL(15,2),
-    customer_status STRING,
+    customer_segment VARCHAR(50),
+    customer_status VARCHAR(20),
     effective_start_date DATE,
     effective_end_date DATE,
-    is_current_record BOOLEAN,
+    is_current BOOLEAN,
     load_date TIMESTAMP,
     update_date TIMESTAMP,
-    source_system STRING
+    source_system VARCHAR(50)
 )
 USING DELTA
-PARTITIONED BY (country)
 TBLPROPERTIES (
     'delta.autoOptimize.optimizeWrite' = 'true',
     'delta.autoOptimize.autoCompact' = 'true'
 );
 ```
 
-#### 1.2.5 Go_Date_Dimension
+#### Go_Date_Dimension
 ```sql
 CREATE TABLE IF NOT EXISTS Go_Date_Dimension (
-    date_dimension_id BIGINT,
-    date_key STRING,
+    date_id BIGINT,
+    date_key INT,
     full_date DATE,
-    day_of_week INTEGER,
-    day_name STRING,
-    day_of_month INTEGER,
-    day_of_year INTEGER,
-    week_of_year INTEGER,
-    month_number INTEGER,
-    month_name STRING,
-    quarter_number INTEGER,
-    quarter_name STRING,
-    year_number INTEGER,
+    day_of_week INT,
+    day_name VARCHAR(20),
+    day_of_month INT,
+    day_of_year INT,
+    week_of_year INT,
+    month_number INT,
+    month_name VARCHAR(20),
+    quarter_number INT,
+    quarter_name VARCHAR(10),
+    year_number INT,
     is_weekend BOOLEAN,
     is_holiday BOOLEAN,
-    fiscal_year INTEGER,
-    fiscal_quarter INTEGER,
-    fiscal_month INTEGER,
+    fiscal_year INT,
+    fiscal_quarter INT,
     load_date TIMESTAMP,
-    source_system STRING
+    source_system VARCHAR(50)
 )
 USING DELTA
-PARTITIONED BY (year_number)
 TBLPROPERTIES (
     'delta.autoOptimize.optimizeWrite' = 'true',
     'delta.autoOptimize.autoCompact' = 'true'
 );
 ```
 
-### 1.3 AUDIT TABLE DDL SCRIPT
+### 1.3 Code Tables DDL Scripts
 
-#### 1.3.1 Go_Pipeline_Audit
+#### Go_Movement_Type_Code
 ```sql
-CREATE TABLE IF NOT EXISTS Go_Pipeline_Audit (
-    pipeline_audit_id BIGINT,
-    audit_key STRING,
-    pipeline_name STRING,
-    pipeline_run_id STRING,
-    execution_start_time TIMESTAMP,
-    execution_end_time TIMESTAMP,
-    execution_duration_seconds INTEGER,
-    pipeline_status STRING,
-    source_table_name STRING,
-    target_table_name STRING,
-    records_read BIGINT,
-    records_written BIGINT,
-    records_updated BIGINT,
-    records_deleted BIGINT,
-    error_message STRING,
-    execution_environment STRING,
-    executed_by STRING,
+CREATE TABLE IF NOT EXISTS Go_Movement_Type_Code (
+    movement_type_id BIGINT,
+    movement_type_code VARCHAR(20),
+    movement_type_name VARCHAR(100),
+    movement_type_description VARCHAR(500),
+    is_active BOOLEAN,
     load_date TIMESTAMP,
-    source_system STRING
+    update_date TIMESTAMP,
+    source_system VARCHAR(50)
 )
 USING DELTA
-PARTITIONED BY (DATE(execution_start_time))
 TBLPROPERTIES (
     'delta.autoOptimize.optimizeWrite' = 'true',
     'delta.autoOptimize.autoCompact' = 'true'
 );
 ```
 
-### 1.4 ERROR DATA TABLE DDL SCRIPT
+### 1.4 Error Data Table DDL Script
 
-#### 1.4.1 Go_Data_Quality_Errors
+#### Go_Data_Validation_Error
 ```sql
-CREATE TABLE IF NOT EXISTS Go_Data_Quality_Errors (
-    data_quality_error_id BIGINT,
-    error_key STRING,
-    pipeline_run_id STRING,
-    table_name STRING,
-    column_name STRING,
-    error_type STRING,
-    error_category STRING,
-    error_severity STRING,
-    error_description STRING,
-    error_rule STRING,
-    record_identifier STRING,
-    invalid_value STRING,
-    expected_value STRING,
-    error_count INTEGER,
+CREATE TABLE IF NOT EXISTS Go_Data_Validation_Error (
+    error_id BIGINT,
+    error_key BIGINT,
+    pipeline_run_id VARCHAR(100),
+    table_name VARCHAR(100),
+    column_name VARCHAR(100),
+    record_identifier VARCHAR(200),
+    error_type VARCHAR(100),
+    error_category VARCHAR(50),
+    error_severity VARCHAR(20),
+    error_description VARCHAR(1000),
+    expected_value VARCHAR(500),
+    actual_value VARCHAR(500),
+    validation_rule VARCHAR(500),
     error_timestamp TIMESTAMP,
-    resolution_status STRING,
-    resolution_notes STRING,
-    resolved_by STRING,
+    resolution_status VARCHAR(50),
+    resolution_notes VARCHAR(1000),
+    resolved_by VARCHAR(100),
     resolved_timestamp TIMESTAMP,
     load_date TIMESTAMP,
-    source_system STRING
+    source_system VARCHAR(50)
 )
 USING DELTA
 PARTITIONED BY (DATE(error_timestamp))
@@ -306,15 +281,54 @@ TBLPROPERTIES (
 );
 ```
 
-### 1.5 AGGREGATED TABLES DDL SCRIPTS
+### 1.5 Audit Table DDL Script
 
-#### 1.5.1 Go_Inventory_Summary_Daily
+#### Go_Process_Audit
 ```sql
-CREATE TABLE IF NOT EXISTS Go_Inventory_Summary_Daily (
-    inventory_summary_id BIGINT,
-    summary_date_key STRING,
-    product_key STRING,
-    warehouse_key STRING,
+CREATE TABLE IF NOT EXISTS Go_Process_Audit (
+    audit_id BIGINT,
+    audit_key BIGINT,
+    process_name VARCHAR(200),
+    process_type VARCHAR(50),
+    pipeline_name VARCHAR(200),
+    pipeline_run_id VARCHAR(100),
+    job_name VARCHAR(200),
+    step_name VARCHAR(200),
+    source_table VARCHAR(100),
+    target_table VARCHAR(100),
+    records_read BIGINT,
+    records_processed BIGINT,
+    records_inserted BIGINT,
+    records_updated BIGINT,
+    records_deleted BIGINT,
+    records_rejected BIGINT,
+    process_start_time TIMESTAMP,
+    process_end_time TIMESTAMP,
+    process_duration_seconds INT,
+    process_status VARCHAR(20),
+    error_message VARCHAR(2000),
+    user_name VARCHAR(100),
+    load_date TIMESTAMP,
+    source_system VARCHAR(50)
+)
+USING DELTA
+PARTITIONED BY (DATE(process_start_time))
+TBLPROPERTIES (
+    'delta.autoOptimize.optimizeWrite' = 'true',
+    'delta.autoOptimize.autoCompact' = 'true'
+);
+```
+
+### 1.6 Aggregated Tables DDL Scripts
+
+#### Go_Daily_Inventory_Summary
+```sql
+CREATE TABLE IF NOT EXISTS Go_Daily_Inventory_Summary (
+    summary_id BIGINT,
+    summary_key BIGINT,
+    date_key INT,
+    product_key BIGINT,
+    warehouse_key BIGINT,
     opening_balance DECIMAL(15,2),
     total_receipts DECIMAL(15,2),
     total_issues DECIMAL(15,2),
@@ -322,53 +336,85 @@ CREATE TABLE IF NOT EXISTS Go_Inventory_Summary_Daily (
     closing_balance DECIMAL(15,2),
     average_cost DECIMAL(10,2),
     total_value DECIMAL(15,2),
-    reorder_point DECIMAL(15,2),
-    stock_status STRING,
     load_date TIMESTAMP,
-    source_system STRING
+    source_system VARCHAR(50)
 )
 USING DELTA
-PARTITIONED BY (summary_date_key)
+PARTITIONED BY (date_key)
 TBLPROPERTIES (
     'delta.autoOptimize.optimizeWrite' = 'true',
     'delta.autoOptimize.autoCompact' = 'true'
 );
 ```
 
-#### 1.5.2 Go_Sales_Summary_Monthly
+#### Go_Monthly_Sales_Summary
 ```sql
-CREATE TABLE IF NOT EXISTS Go_Sales_Summary_Monthly (
-    sales_summary_id BIGINT,
-    summary_month_key STRING,
-    product_key STRING,
-    customer_key STRING,
-    warehouse_key STRING,
+CREATE TABLE IF NOT EXISTS Go_Monthly_Sales_Summary (
+    summary_id BIGINT,
+    summary_key BIGINT,
+    year_month INT,
+    product_key BIGINT,
+    warehouse_key BIGINT,
+    customer_key BIGINT,
     total_quantity_sold DECIMAL(15,2),
     total_sales_amount DECIMAL(15,2),
     total_discount_amount DECIMAL(15,2),
-    total_tax_amount DECIMAL(15,2),
     net_sales_amount DECIMAL(15,2),
-    average_unit_price DECIMAL(10,2),
-    number_of_transactions INTEGER,
-    unique_customers INTEGER,
+    number_of_transactions INT,
+    average_transaction_value DECIMAL(10,2),
     load_date TIMESTAMP,
-    source_system STRING
+    source_system VARCHAR(50)
 )
 USING DELTA
-PARTITIONED BY (summary_month_key)
+PARTITIONED BY (year_month)
 TBLPROPERTIES (
     'delta.autoOptimize.optimizeWrite' = 'true',
     'delta.autoOptimize.autoCompact' = 'true'
 );
 ```
 
-### 1.6 UPDATE DDL SCRIPTS
+### 1.7 Update DDL Scripts
 
-#### 1.6.1 Add Index Optimization
+#### Update Scripts for Data Model Changes
 ```sql
--- Optimize tables for better query performance
-OPTIMIZE Go_Inventory_Movement_Fact ZORDER BY (product_key, warehouse_key);
-OPTIMIZE Go_Sales_Fact ZORDER BY (product_key, customer_key, warehouse_key);
+-- Script to add new columns to existing tables
+-- Example: Adding new column to Go_Product_Dimension
+ALTER TABLE Go_Product_Dimension ADD COLUMN (
+    product_weight DECIMAL(10,3),
+    product_dimensions VARCHAR(100)
+);
+
+-- Script to modify column data types (requires table recreation in Spark SQL)
+-- Example: Increasing varchar length for product_description
+CREATE OR REPLACE TABLE Go_Product_Dimension_New AS
+SELECT 
+    product_id,
+    product_key,
+    product_code,
+    product_name,
+    CAST(product_description AS VARCHAR(1000)) as product_description,
+    category_name,
+    subcategory_name,
+    brand_name,
+    unit_of_measure,
+    standard_cost,
+    list_price,
+    product_status,
+    effective_start_date,
+    effective_end_date,
+    is_current,
+    load_date,
+    update_date,
+    source_system
+FROM Go_Product_Dimension;
+
+-- Drop old table and rename new table
+DROP TABLE Go_Product_Dimension;
+ALTER TABLE Go_Product_Dimension_New RENAME TO Go_Product_Dimension;
+
+-- Script to create indexes (using Z-ORDER optimization in Delta)
+OPTIMIZE Go_Inventory_Movement_Fact ZORDER BY (product_key, warehouse_key, date_key);
+OPTIMIZE Go_Sales_Fact ZORDER BY (product_key, customer_key, date_key);
 OPTIMIZE Go_Product_Dimension ZORDER BY (product_key, product_code);
 OPTIMIZE Go_Warehouse_Dimension ZORDER BY (warehouse_key, warehouse_code);
 OPTIMIZE Go_Supplier_Dimension ZORDER BY (supplier_key, supplier_code);
@@ -376,220 +422,181 @@ OPTIMIZE Go_Customer_Dimension ZORDER BY (customer_key, customer_code);
 OPTIMIZE Go_Date_Dimension ZORDER BY (date_key);
 ```
 
-#### 1.6.2 Table Statistics Update
-```sql
--- Update table statistics for query optimization
-ANALYZE TABLE Go_Inventory_Movement_Fact COMPUTE STATISTICS;
-ANALYZE TABLE Go_Sales_Fact COMPUTE STATISTICS;
-ANALYZE TABLE Go_Product_Dimension COMPUTE STATISTICS;
-ANALYZE TABLE Go_Warehouse_Dimension COMPUTE STATISTICS;
-ANALYZE TABLE Go_Supplier_Dimension COMPUTE STATISTICS;
-ANALYZE TABLE Go_Customer_Dimension COMPUTE STATISTICS;
-ANALYZE TABLE Go_Date_Dimension COMPUTE STATISTICS;
-ANALYZE TABLE Go_Pipeline_Audit COMPUTE STATISTICS;
-ANALYZE TABLE Go_Data_Quality_Errors COMPUTE STATISTICS;
-ANALYZE TABLE Go_Inventory_Summary_Daily COMPUTE STATISTICS;
-ANALYZE TABLE Go_Sales_Summary_Monthly COMPUTE STATISTICS;
-```
-
----
-
-## 2. DATA RETENTION POLICIES
+## 2. Data Retention Policies
 
 ### 2.1 Retention Periods for Gold Layer
 
-#### Fact Tables
-- **Go_Inventory_Movement_Fact**: 7 years (2555 days)
-- **Go_Sales_Fact**: 7 years (2555 days)
-
-#### Dimension Tables
-- **Go_Product_Dimension**: Permanent retention with SCD Type 2
-- **Go_Warehouse_Dimension**: Permanent retention with SCD Type 2
-- **Go_Supplier_Dimension**: Permanent retention with SCD Type 2
-- **Go_Customer_Dimension**: 10 years (3650 days) with SCD Type 2
-- **Go_Date_Dimension**: Permanent retention
-
-#### Audit and Error Tables
-- **Go_Pipeline_Audit**: 2 years (730 days)
-- **Go_Data_Quality_Errors**: 1 year (365 days)
-
-#### Aggregated Tables
-- **Go_Inventory_Summary_Daily**: 5 years (1825 days)
-- **Go_Sales_Summary_Monthly**: 10 years (3650 days)
+| Table Category | Retention Period | Rationale |
+|----------------|------------------|------------|
+| Fact Tables | 7 years | Regulatory compliance and historical analysis |
+| Dimension Tables | Indefinite | Master data reference |
+| Aggregated Tables | 5 years | Performance optimization for reporting |
+| Audit Tables | 3 years | Compliance and troubleshooting |
+| Error Tables | 2 years | Data quality monitoring |
+| Code Tables | Indefinite | Reference data |
 
 ### 2.2 Archiving Strategies
 
-#### 2.2.1 Automated Archiving Process
+#### Cold Storage Archiving
 ```sql
--- Archive old audit records
-CREATE OR REPLACE TEMPORARY VIEW old_audit_records AS
-SELECT * FROM Go_Pipeline_Audit 
-WHERE execution_start_time < date_sub(current_date(), 730);
-
--- Move to archive table
-CREATE TABLE IF NOT EXISTS Go_Pipeline_Audit_Archive
+-- Archive old fact data to cold storage
+CREATE TABLE Go_Inventory_Movement_Fact_Archive
 USING DELTA
-AS SELECT * FROM old_audit_records;
+LOCATION 's3://cold-storage-bucket/inventory_movement_archive/'
+AS SELECT * FROM Go_Inventory_Movement_Fact 
+WHERE date_key < date_format(add_months(current_date(), -84), 'yyyyMMdd');
 
--- Delete from main table
-DELETE FROM Go_Pipeline_Audit 
-WHERE execution_start_time < date_sub(current_date(), 730);
+-- Delete archived data from active table
+DELETE FROM Go_Inventory_Movement_Fact 
+WHERE date_key < date_format(add_months(current_date(), -84), 'yyyyMMdd');
 ```
 
-#### 2.2.2 Data Quality Error Archiving
+#### Automated Retention Policy
 ```sql
--- Archive resolved errors older than 1 year
-CREATE OR REPLACE TEMPORARY VIEW old_error_records AS
-SELECT * FROM Go_Data_Quality_Errors 
-WHERE error_timestamp < date_sub(current_date(), 365)
-AND resolution_status = 'RESOLVED';
+-- Set up automated retention using Delta Lake time travel
+ALTER TABLE Go_Process_Audit SET TBLPROPERTIES (
+    'delta.logRetentionDuration' = 'interval 3 years',
+    'delta.deletedFileRetentionDuration' = 'interval 1 year'
+);
 
--- Move to archive table
-CREATE TABLE IF NOT EXISTS Go_Data_Quality_Errors_Archive
-USING DELTA
-AS SELECT * FROM old_error_records;
-
--- Delete from main table
-DELETE FROM Go_Data_Quality_Errors 
-WHERE error_timestamp < date_sub(current_date(), 365)
-AND resolution_status = 'RESOLVED';
+ALTER TABLE Go_Data_Validation_Error SET TBLPROPERTIES (
+    'delta.logRetentionDuration' = 'interval 2 years',
+    'delta.deletedFileRetentionDuration' = 'interval 6 months'
+);
 ```
 
----
+## 3. Conceptual Data Model Diagram (Tabular Form)
 
-## 3. CONCEPTUAL DATA MODEL DIAGRAM (TABULAR FORM)
+### 3.1 Table Relationships
 
 | Source Table | Target Table | Relationship Key | Relationship Type | Description |
 |--------------|--------------|------------------|-------------------|-------------|
-| Go_Inventory_Movement_Fact | Go_Product_Dimension | product_key | Many-to-One | Each inventory movement relates to one product |
-| Go_Inventory_Movement_Fact | Go_Warehouse_Dimension | warehouse_key | Many-to-One | Each inventory movement occurs at one warehouse |
-| Go_Inventory_Movement_Fact | Go_Supplier_Dimension | supplier_key | Many-to-One | Each inventory movement may involve one supplier |
-| Go_Inventory_Movement_Fact | Go_Date_Dimension | movement_date_key | Many-to-One | Each inventory movement occurs on one date |
-| Go_Sales_Fact | Go_Product_Dimension | product_key | Many-to-One | Each sale involves one product |
-| Go_Sales_Fact | Go_Customer_Dimension | customer_key | Many-to-One | Each sale is made to one customer |
+| Go_Inventory_Movement_Fact | Go_Product_Dimension | product_key | Many-to-One | Each movement relates to one product |
+| Go_Inventory_Movement_Fact | Go_Warehouse_Dimension | warehouse_key | Many-to-One | Each movement occurs at one warehouse |
+| Go_Inventory_Movement_Fact | Go_Supplier_Dimension | supplier_key | Many-to-One | Each movement may involve one supplier |
+| Go_Inventory_Movement_Fact | Go_Date_Dimension | date_key | Many-to-One | Each movement occurs on one date |
+| Go_Sales_Fact | Go_Product_Dimension | product_key | Many-to-One | Each sale relates to one product |
+| Go_Sales_Fact | Go_Customer_Dimension | customer_key | Many-to-One | Each sale relates to one customer |
 | Go_Sales_Fact | Go_Warehouse_Dimension | warehouse_key | Many-to-One | Each sale originates from one warehouse |
-| Go_Sales_Fact | Go_Date_Dimension | sales_date_key | Many-to-One | Each sale occurs on one date |
-| Go_Inventory_Summary_Daily | Go_Product_Dimension | product_key | Many-to-One | Daily summary for each product |
-| Go_Inventory_Summary_Daily | Go_Warehouse_Dimension | warehouse_key | Many-to-One | Daily summary for each warehouse |
-| Go_Inventory_Summary_Daily | Go_Date_Dimension | summary_date_key | Many-to-One | Daily summary for each date |
-| Go_Sales_Summary_Monthly | Go_Product_Dimension | product_key | Many-to-One | Monthly summary for each product |
-| Go_Sales_Summary_Monthly | Go_Customer_Dimension | customer_key | Many-to-One | Monthly summary for each customer |
-| Go_Sales_Summary_Monthly | Go_Warehouse_Dimension | warehouse_key | Many-to-One | Monthly summary for each warehouse |
-| Go_Pipeline_Audit | Go_Data_Quality_Errors | pipeline_run_id | One-to-Many | One pipeline run may have multiple errors |
+| Go_Sales_Fact | Go_Date_Dimension | date_key | Many-to-One | Each sale occurs on one date |
+| Go_Daily_Inventory_Summary | Go_Product_Dimension | product_key | Many-to-One | Each summary relates to one product |
+| Go_Daily_Inventory_Summary | Go_Warehouse_Dimension | warehouse_key | Many-to-One | Each summary relates to one warehouse |
+| Go_Daily_Inventory_Summary | Go_Date_Dimension | date_key | Many-to-One | Each summary relates to one date |
+| Go_Monthly_Sales_Summary | Go_Product_Dimension | product_key | Many-to-One | Each summary relates to one product |
+| Go_Monthly_Sales_Summary | Go_Warehouse_Dimension | warehouse_key | Many-to-One | Each summary relates to one warehouse |
+| Go_Monthly_Sales_Summary | Go_Customer_Dimension | customer_key | Many-to-One | Each summary relates to one customer |
+| Go_Process_Audit | Go_Data_Validation_Error | pipeline_run_id | One-to-Many | One process run can have multiple errors |
 
----
+### 3.2 Key Field Mappings
 
-## 4. ER DIAGRAM VISUALIZATION GRAPH
+| Table Name | Primary Key Field | Business Key Field | Foreign Key Fields |
+|------------|-------------------|--------------------|--------------------|  
+| Go_Inventory_Movement_Fact | inventory_movement_id | inventory_movement_key | product_key, warehouse_key, supplier_key, date_key |
+| Go_Sales_Fact | sales_id | sales_key | product_key, customer_key, warehouse_key, date_key |
+| Go_Product_Dimension | product_id | product_code | None |
+| Go_Warehouse_Dimension | warehouse_id | warehouse_code | None |
+| Go_Supplier_Dimension | supplier_id | supplier_code | None |
+| Go_Customer_Dimension | customer_id | customer_code | None |
+| Go_Date_Dimension | date_id | date_key | None |
+| Go_Daily_Inventory_Summary | summary_id | summary_key | product_key, warehouse_key, date_key |
+| Go_Monthly_Sales_Summary | summary_id | summary_key | product_key, warehouse_key, customer_key |
+| Go_Process_Audit | audit_id | audit_key | None |
+| Go_Data_Validation_Error | error_id | error_key | None |
+| Go_Movement_Type_Code | movement_type_id | movement_type_code | None |
+
+## 4. ER Diagram Visualization Graph
+
+### 4.1 Star Schema Visualization
 
 ```
                     Go_Date_Dimension
                            |
-                    [date_key (PK)]
+                       date_key
                            |
-                    +------+------+
-                    |             |
-            [movement_date_key]  [sales_date_key]
-                    |             |
-                    |             |
-        Go_Inventory_Movement_Fact   Go_Sales_Fact
-        [inventory_movement_id (PK)]  [sales_fact_id (PK)]
-                    |             |
-            +-------+-------+     +-------+-------+
-            |       |       |     |       |       |
-    [product_key] [warehouse_key] [supplier_key] [product_key] [customer_key] [warehouse_key]
-            |       |       |     |       |       |
-            |       |       |     |       |       |
-    Go_Product_Dimension    |     Go_Supplier_Dimension   Go_Customer_Dimension
-    [product_dimension_id]  |     [supplier_dimension_id] [customer_dimension_id]
-            |               |             |       |
-            |        Go_Warehouse_Dimension |       |
-            |        [warehouse_dimension_id]      |
-            |               |             |       |
-            +---------------+-------------+-------+
-                           |
-                    Go_Inventory_Summary_Daily
-                    [inventory_summary_id (PK)]
-                           |
-                    Go_Sales_Summary_Monthly
-                    [sales_summary_id (PK)]
-
-        Go_Pipeline_Audit -----> Go_Data_Quality_Errors
-        [pipeline_audit_id]      [data_quality_error_id]
-        [pipeline_run_id] -----> [pipeline_run_id]
+    Go_Product_Dimension   |   Go_Warehouse_Dimension
+            |              |              |
+        product_key        |         warehouse_key
+            |              |              |
+            +------+-------+-------+------+
+                   |               |
+         Go_Inventory_Movement_Fact   Go_Sales_Fact
+                   |               |
+            supplier_key     customer_key
+                   |               |
+    Go_Supplier_Dimension   Go_Customer_Dimension
 ```
 
----
+### 4.2 Aggregated Tables Relationships
 
-## 5. DESIGN ASSUMPTIONS AND DECISIONS
+```
+Go_Date_Dimension -----> Go_Daily_Inventory_Summary <----- Go_Product_Dimension
+                                    |                              |
+                                    |                              |
+                         Go_Warehouse_Dimension                    |
+                                                                   |
+                                                                   |
+Go_Customer_Dimension --> Go_Monthly_Sales_Summary <--------------+
+                                    |
+                         Go_Warehouse_Dimension
+```
+
+### 4.3 Audit and Error Tracking
+
+```
+Go_Process_Audit ----pipeline_run_id----> Go_Data_Validation_Error
+       |                                           |
+   audit_key                                 error_key
+       |                                           |
+   [All Tables] <------ Data Lineage -------> [Error Records]
+```
+
+## 5. Design Assumptions and Decisions
 
 ### 5.1 Key Design Decisions
 
-1. **ID Fields Addition**: Added surrogate key ID fields to all tables as required
-   - All tables now have auto-incrementing BIGINT ID fields
-   - Maintained original business keys alongside surrogate keys
+1. **ID Fields Addition**: Added surrogate key ID fields (ending with _id) to all tables as requested, in addition to business keys
+2. **Delta Lake Storage**: Used Delta Lake format for all tables to leverage ACID transactions and time travel capabilities
+3. **Partitioning Strategy**: 
+   - Fact tables partitioned by date_key for optimal query performance
+   - Audit and error tables partitioned by date for efficient data management
+4. **Data Types**: Used Databricks-compatible data types (VARCHAR instead of TEXT, TIMESTAMP instead of DATETIME)
+5. **No Constraints**: Avoided PRIMARY KEY, FOREIGN KEY, and UNIQUE constraints as they are not supported in Spark SQL
+6. **Z-ORDER Optimization**: Implemented Z-ORDER clustering for frequently queried columns
+7. **SCD Implementation**: Type 2 SCD for dimensions with effective_start_date, effective_end_date, and is_current flags
 
-2. **Databricks Compatibility**: 
-   - Used Delta Lake storage format for all tables
-   - Avoided unsupported constraints (PRIMARY KEY, FOREIGN KEY, UNIQUE)
-   - Used Spark SQL compatible data types
-   - Replaced DATETIME with TIMESTAMP
-   - Replaced TEXT with STRING
+### 5.2 Performance Optimizations
 
-3. **Partitioning Strategy**:
-   - Fact tables partitioned by date keys for optimal query performance
-   - Dimension tables partitioned by logical groupings (country, status, year)
-   - Audit tables partitioned by execution date
+1. **Auto Optimize**: Enabled auto-optimize features for all Delta tables
+2. **Partitioning**: Strategic partitioning based on query patterns
+3. **Aggregated Tables**: Pre-calculated summaries for common reporting scenarios
+4. **Indexing**: Z-ORDER optimization instead of traditional indexes
 
-4. **Performance Optimization**:
-   - Enabled Delta Lake auto-optimization features
-   - Implemented Z-ORDER clustering on frequently queried columns
-   - Added table statistics computation
+### 5.3 Data Governance
 
-5. **Data Retention**: 
-   - Implemented tiered retention policies based on business requirements
-   - Separate archiving strategies for different table types
+1. **Audit Trail**: Comprehensive audit framework with process tracking
+2. **Error Handling**: Dedicated error tracking for data quality management
+3. **Data Lineage**: Source system tracking in all tables
+4. **Retention Policies**: Defined retention periods for compliance
 
-### 5.2 Assumptions Made
+## 6. Implementation Guidelines
 
-1. **Business Requirements**: Assumed standard inventory management reporting needs
-2. **Data Volume**: Assumed moderate to high data volumes requiring partitioning
-3. **Query Patterns**: Assumed frequent queries on date ranges and key dimensions
-4. **Compliance**: Assumed 7-year retention for financial data
-5. **Performance**: Assumed need for sub-second query response times
+### 6.1 Deployment Sequence
 
-### 5.3 Databricks-Specific Features
+1. Create dimension tables first (Go_Date_Dimension, Go_Product_Dimension, etc.)
+2. Create code tables (Go_Movement_Type_Code)
+3. Create fact tables (Go_Inventory_Movement_Fact, Go_Sales_Fact)
+4. Create aggregated tables (Go_Daily_Inventory_Summary, Go_Monthly_Sales_Summary)
+5. Create audit and error tables (Go_Process_Audit, Go_Data_Validation_Error)
+6. Apply Z-ORDER optimization
+7. Set up retention policies
 
-1. **Delta Lake**: Used for ACID transactions and time travel capabilities
-2. **Auto-Optimization**: Enabled for automatic file compaction and optimization
-3. **Z-ORDER**: Implemented for multi-dimensional clustering
-4. **Liquid Clustering**: Can be enabled for dynamic optimization
+### 6.2 Data Loading Strategy
 
----
+1. **Initial Load**: Full load for dimensions and historical fact data
+2. **Incremental Load**: Delta-based loading for ongoing fact table updates
+3. **SCD Processing**: Implement Type 2 SCD logic for dimension changes
+4. **Aggregation Refresh**: Scheduled refresh of aggregated tables
 
-## 6. IMPLEMENTATION GUIDELINES
+## 7. apiCost
 
-### 6.1 Deployment Order
-1. Create Date dimension first (referenced by all fact tables)
-2. Create all other dimension tables
-3. Create fact tables
-4. Create aggregated tables
-5. Create audit and error tables
-6. Run optimization scripts
-
-### 6.2 Monitoring and Maintenance
-1. Schedule regular OPTIMIZE operations
-2. Monitor table statistics and update as needed
-3. Implement automated archiving processes
-4. Set up alerts for data quality issues
-
-### 6.3 Security Considerations
-1. Implement column-level security for PII data
-2. Use Unity Catalog for governance
-3. Set up appropriate access controls
-4. Enable audit logging
-
----
-
-## apiCost: 0.0234
-
-**Note**: This physical data model is fully compatible with Databricks Spark SQL and follows medallion architecture best practices. All tables include the required ID fields and are optimized for analytical workloads.
+**apiCost**: 0.0245 // Cost consumed by the API for this call (in USD)
