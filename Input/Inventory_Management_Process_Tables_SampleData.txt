@@ -1,0 +1,157 @@
+Products table:
+
+Product_ID	Product_Name	Category
+1	        Laptop	        Electronics
+2	        Smartphone	Electronics
+3	        T-Shirt        	Apparel
+4	        Sofa	        Furniture
+5	        Headphones	Electronics
+6	        Desk	        Furniture
+7	        Shoes	        Apparel
+8	        Microwave	Electronics
+9	        Chair	        Furniture
+10	        Jacket	        Apparel
+
+--------------------------------------------------
+
+Suppliers table:
+
+Supplier_ID	Supplier_Name	        Contact_Number   Product_ID
+1	        ABC Supplies	        1234567890       1
+2	        XYZ Wholesalers	        9876543210       2
+3	        Global Traders	        4567891230       3
+4	        QuickMart	        5678901234       4
+5	        ProSupply	        3456789012       5
+6	        FreshSupply	        8765432109       6
+7	        Urban Goods	        1230984567       7
+8	        Metro Supply Co.	9081726354       8
+9	        NextGen Suppliers	8192736455       9
+10	        Smart Distributors	1029384756       10
+
+---------------------------------------------------
+
+Warehouses table:
+
+Warehouse_ID	Location	Capacity
+1	        New York	10000
+2	        Los Angeles	8000
+3	        Chicago	        6000
+4	        Houston        	7000
+5	        Phoenix        	5000
+6	        Philadelphia	4000
+7	        San Antonio	3000
+8	        San Diego	2000
+9	        Dallas	        1000
+10	        San Jose	1200
+
+---------------------------------------------------
+
+Inventory table:
+
+Inventory_ID	Product_ID	Quantity_Available    Warehouse_ID
+1	        1	        50                    1
+2	        2	        30                    2
+3	        3	        200                   3
+4	        4	        10                    4
+5	        5	        60                    5
+6	        6	        15                    6
+7	        7	        100                   7
+8	        8	        25                    8
+9	        9	        40                    9
+10	        10	        80                    10
+
+--------------------------------------------------
+
+Orders table:
+
+Order_ID	Customer_ID	Order_Date
+1	        1	        2024-01-01
+2	        2	        2024-01-02
+3	        3	        2024-01-03
+4	        4	        2024-01-04
+5	        5	        2024-01-05
+6	        6	        2024-01-06
+7	        7	        2024-01-07
+8	        8        	2024-01-08
+9	        9        	2024-01-09
+10	        10        	2024-01-10
+
+--------------------------------------------------
+
+Order_Details table:
+
+Order_Detail_ID	Order_ID	Product_ID	Quantity_Ordered
+1	        1	        1	        2
+2	        2	        2	        1
+3        	3	        3	        5
+4	        4	        4	        1
+5	        5	        5	        3
+6	        6	        6	        1
+7	        7	        7	        2
+8	        8	        8	        4
+9	        9	        9	        1
+10	        10	        10	        6
+
+--------------------------------------------------
+
+Shipments table:
+
+Shipment_ID	Order_ID	Shipment_Date
+1	        1        	2024-01-02
+2	        2	        2024-01-03
+3	        3	        2024-01-04
+4	        4	        2024-01-05
+5	        5        	2024-01-06
+6	        6	        2024-01-07
+7	        7        	2024-01-08
+8	        8	        2024-01-09
+9	        9        	2024-01-10
+10	        10	        2024-01-11
+
+--------------------------------------------------
+
+Returns table :
+
+Return_ID	Order_ID	Return_Reason
+1	        1	        Damaged
+2	        2	        Defective
+3	        3	        Wrong Item
+4	        4        	Damaged
+5	        5        	Defective
+6	        6        	Wrong Item
+7	        7        	Damaged
+8	        8        	Defective
+9	        9        	Wrong Item
+10        	10        	Damaged
+
+--------------------------------------------------
+
+Stock_Levels table:
+
+Stock_Level_ID	Warehouse_ID	Product_ID	Reorder_Threshold
+1	  	1	  	1  		20
+2	  	2	  	2	  	10
+3	  	3	  	3	  	50
+4	  	4	  	4	  	5
+5	  	5	  	5	  	20
+6	  	6	  	6	  	5
+7	  	7	  	7	  	40
+8	  	8	  	8	  	10
+9	  	9	  	9	  	15
+10	  	10	  	10	  	30
+
+--------------------------------------------------
+
+Customers table:
+
+Customer_Name	Email
+John Doe	john.doe@example.com
+Jane Smith	jane.smith@example.com
+Sam Brown	sam.brown@example.com
+Lucy White	lucy.white@example.com
+Mike Green	mike.green@example.com
+Anna Blue	anna.blue@example.com
+Tom Black	tom.black@example.com
+Emma Grey	emma.grey@example.com
+Chris Red	chris.red@example.com
+Sophie Yellow	sophie.yellow@example.com
