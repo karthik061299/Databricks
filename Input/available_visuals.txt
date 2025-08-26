@@ -1,0 +1,83 @@
+Stacked bar chart,
+
+Stacked Column chart,
+
+Clustered bar chart,
+
+Clustered Column chart,
+
+100% Stacked bar chart,
+
+100% Stacked Column chart,
+
+Line Chart,
+
+Area Chart,
+
+Stacked Area Chart,
+
+100% Stacked Area Chart,
+
+Line and Stacked Column chart,
+
+Line and Clustered Column chart,
+
+Ribbon Chart,
+
+Waterfall Chart,
+
+Funnel,
+
+Scatter Chart,
+
+Pie Chart,
+
+Donut Chart,
+
+Treemap,
+
+Map,
+
+Filled Map,
+
+Azure Map,
+
+Gauge,
+
+Card,
+
+Multi-row Card,
+
+KPI,
+
+Slicer,
+
+Table,
+
+Matrix,
+
+R Script Visual,
+
+Python Visual ,
+
+Key Influencers,
+
+Decomposition Tree,
+
+Q & A,
+
+Narrative,
+
+Goals,
+
+Paginated Report,
+
+Tile Slicer,
+
+Card(new),
+
+ArcGIS for Power BI,
+
+Power Apps for Power BI,
+
+Power Automate for Power BI.
