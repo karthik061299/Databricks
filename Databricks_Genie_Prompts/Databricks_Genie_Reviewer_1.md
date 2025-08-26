@@ -1,135 +1,72 @@
 _____________________________________________
 ## *Author*: AAVA
 ## *Created on*:   
-## *Description*:   Comprehensive review and refinement of Databricks Genie prompts for insightful, user-friendly dashboards
+## *Description*:   Databricks Dashboard Visuals Recommender for Inventory Management
 ## *Version*: 1 
 ## *Updated on*: 
 _____________________________________________
 
-# Databricks Genie Reviewer
+# Databricks Dashboard Visuals Recommender for Inventory Management
 
-## Table of Contents
-1. Metadata Requirements
-2. Reviewer Test Case Structure
-3. Input Data Sources & Transformations
-4. Visual Prompt Review
-5. Visual Selection & Recommendations
-6. Dashboard Expansion Suggestions
-7. Data Field & Calculation Validation
-8. Formatting & Best Practices
-9. Usability Enhancements
-10. Final Recommendations
+This document provides recommendations for Databricks SQL queries, data models, and dashboard visuals for inventory management reporting. It follows best practices for performance, scalability, and effective visualization design.
 
 ---
 
-## 1. Metadata Requirements
-- Author: AAVA
-- Created on: *(auto-filled by system)*
-- Description: Comprehensive review and refinement of Databricks Genie prompts for insightful, user-friendly dashboards
-- Version: 1
-- Updated on: *(auto-filled by system)*
+## 1. Visual Recommendations
+
+| Data Element                   | SQL Query                                                                                                                                                                                                                           | Recommended Visual     | Data Fields                             | Calculations     | Interactivity                        | Justification                                                        | Optimization Tips                       |
+|-------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-----------------------|-----------------------------------------|------------------|--------------------------------------|-----------------------------------------------------------------------|-----------------------------------------|
+| Inventory Turnover Analysis   | SELECT category, SUM(quantity_on_hand) AS total_stock, SUM(quantity_sold) AS total_sold, (SUM(quantity_sold)/SUM(quantity_on_hand)) AS turnover_rate FROM inventory_facts JOIN product_dim ON inventory_facts.product_id = product_dim.product_id GROUP BY category | Bar Chart             | category, total_stock, total_sold, turnover_rate | SUM, division    | Filter by category, drill-down to SKU | Bar chart is ideal for comparing turnover rates across categories     | Partition by date_key, cache product_dim |
+| Stock Level Monitoring        | SELECT warehouse_id, SUM(quantity_on_hand) AS current_stock, SUM(reorder_point) AS reorder_point, SUM(safety_stock) AS safety_stock FROM inventory_facts GROUP BY warehouse_id                                                      | KPI Card, Table       | warehouse_id, current_stock, reorder_point, safety_stock | SUM             | Filter by warehouse, drill-through to product | KPI cards highlight critical stock metrics, table provides details    | Z-order by warehouse_id, cache joins     |
+| Demand Forecasting Dashboard  | SELECT product_id, region, AVG(predicted_demand) AS avg_demand, AVG(forecast_accuracy) AS accuracy FROM demand_forecast GROUP BY product_id, region                                                                                 | Line Chart, Table     | product_id, region, avg_demand, accuracy | AVG              | Filter by region, time period, scenario modeling | Line chart shows trends, table for accuracy                           | Partition by region, cache forecast table|
+| Inventory Aging               | SELECT product_id, DATEDIFF(current_date, received_date) AS days_in_inventory FROM inventory_facts                                                                                                                                | Histogram, Box Plot   | product_id, days_in_inventory            | DATEDIFF         | Filter by product, drill-down to warehouse | Histogram/box plot for distribution analysis                          | Partition by received_date               |
+| Stockout Events               | SELECT date_key, COUNT(*) AS stockout_events FROM inventory_facts WHERE quantity_on_hand = 0 GROUP BY date_key                                                                              | Area Chart            | date_key, stockout_events                | COUNT            | Filter by date, drill-down to category | Area chart for cumulative events                                       | Partition by date_key                    |
 
 ---
 
-## 2. Reviewer Test Case Structure
-This document reviews Databricks Genie prompts to ensure they:
-- Start with "Create" for the first visual and "Add" for subsequent visuals
-- Are complete, clear, and aligned with reporting requirements
-- Use appropriate visual types for the reporting need
-- Suggest alternatives if better visuals exist
-- Expand the dashboard with at least 2–3 additional visuals if needed
-- Confirm necessary fields, aggregations, calculations, and filters are specified
-- Specify titles, axis labels, colors, and legends
-- Maintain consistent formatting
-- Suggest interactivity features (filters, parameters, drill-throughs)
-- Recommend narratives or KPI comparisons
-- Follow Databricks visualization best practices
-- Maintain consistency in structure, terminology, and formatting
+## 2. Overall Dashboard Design
+
+### Layout Suggestions
+- Top row: KPI cards for current stock, reorder point, safety stock
+- Middle: Bar chart for turnover analysis, line chart for demand forecasting
+- Bottom: Table for detailed metrics, histogram/box plot for aging analysis
+- Sidebar: Filters for category, warehouse, time period
+
+### Query Optimization
+- Use Delta Lake for all tables
+- Partition large fact tables by date_key, region
+- Cache dimension tables for frequent joins
+- Z-order by product_id and warehouse_id for efficient filtering
+- Use bucketing for high-cardinality columns
+
+### Color Scheme
+- Use organization branding colors for consistency
+- Bar/line charts: blue, green, orange for differentiation
+- KPI cards: red for critical, green for healthy, yellow for warning
+
+### Typography
+- Use sans-serif fonts (e.g., Arial, Helvetica) for readability
+- Bold for KPI values, regular for labels
+- Consistent font sizes across dashboard
+
+### Interactive Elements
+
+| Feature        | Description                                    |
+|----------------|------------------------------------------------|
+| Filters        | Category, warehouse, time period, region       |
+| Slicers        | Product, supplier                              |
+| Drill-through  | From summary to detailed SKU or warehouse view |
+| Drill up/down  | Aggregate by category, drill down to SKU       |
 
 ---
 
-## 3. Input Data Sources & Transformations
-**Data Sources:**
-- Visualddata: `available_visuals.txt` ([Input Repo](https://github.com/karthik061299/Databricks/tree/main/Input))
-- Inventory: `Inventory_Management_Reports.txt` ([Input Repo](https://github.com/karthik061299/Databricks/tree/main/Input))
-- Bronze Physical Model: `Databricks_Gold_Model_Physical_1.txt` ([Gold Layer Repo](https://github.com/karthik061299/Databricks/tree/main/Databricks_Data_Modeler_Gold_Layer))
-
-**Transformations:**
-- Joins between sales, product, and inventory tables
-- Aggregations (SUM, AVG, COUNT, etc.)
-- Filters (date ranges, categories, regions)
-- Output formats: dashboards, charts, tables
+## Tips & Pitfalls
+- Avoid inefficient joins by caching dimension tables
+- Monitor query performance for large shuffles and skewed data
+- Use Delta Lake optimization features (Z-order, partitioning)
+- Keep dashboard layout simple for usability
+- Regularly review metrics and filters for business relevance
 
 ---
 
-## 4. Visual Prompt Review
-**Prompt Structure:**
-- First visual prompt begins with "Create"
-- Subsequent prompts begin with "Add"
-
-**Sample Prompts:**
-- Create a line chart showing monthly revenue trends for the last 12 months from `sales_fact` table
-- Add a bar chart comparing total inventory levels by product category from `inventory_fact` table
-- Add a KPI card for average stock level with conditional formatting
-
----
-
-## 5. Visual Selection & Recommendations
-| Visual Type      | Use Case                                 | Reviewer Recommendation                      |
-|------------------|------------------------------------------|----------------------------------------------|
-| Line Chart       | Time series (revenue, trends)            | Recommended for trends over time             |
-| Bar Chart        | Category comparison                      | Use for product/category comparisons         |
-| KPI Card         | Key metrics (totals, averages)           | Use for high-level KPIs                      |
-| Map              | Geospatial analysis                      | Use for region/store performance             |
-| Treemap          | Hierarchical category breakdown          | Use for market share or segment analysis     |
-| Heatmap          | Distribution, density, data quality      | Use for anomaly or completeness checks       |
-| Funnel           | Conversion/attrition analysis            | Use for customer journey or escalation rates |
-
----
-
-## 6. Dashboard Expansion Suggestions
-- Add a trend analysis visual (e.g., line chart for sales over time)
-- Add a comparison visual (e.g., bar chart for revenue by region)
-- Add a breakdown visual (e.g., treemap for product categories)
-- Add KPI cards for key metrics (e.g., total revenue, average inventory)
-- Add a heatmap for data quality or anomaly detection
-
----
-
-## 7. Data Field & Calculation Validation
-- Ensure all prompts specify required fields from the data model
-- Confirm aggregations (SUM, AVG, COUNT) are correctly applied
-- Validate filters (date, region, category) are present and accurate
-- Check for correct use of joins and intermediate transformations
-
----
-
-## 8. Formatting & Best Practices
-- All visuals should specify titles, axis labels, colors, and legends
-- Use consistent color schemes (Databricks palette: blue, green, orange)
-- Maintain uniform typography (sans-serif fonts)
-- Use grid layout: KPIs on top, trends in the middle, details at the bottom
-- Document all dashboard components and provide usage examples
-
----
-
-## 9. Usability Enhancements
-- Add interactive filters (date, category, region)
-- Enable drill-through from summary to detail
-- Suggest dynamic parameters for cohort or metric selection
-- Recommend real-time updates for operational metrics
-- Provide narratives or KPI comparisons for better storytelling
-
----
-
-## 10. Final Recommendations
-- All prompts follow Databricks visualization best practices
-- Consistent structure, terminology, and formatting maintained
-- Expanded dashboard with at least 3 additional visuals for richer insights
-- Interactivity and usability features recommended
-- Data quality and completeness checks included
-- Ready for implementation and future versioning
-
----
-
-**End of Reviewer Output**
+This template can be customized further once specific business requirements and data models are provided.
