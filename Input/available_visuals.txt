@@ -1,83 +1,23 @@
-Stacked bar chart,
+# Available Visualizations for Databricks Genie
+# Format: visualization_type|description|best_use_case|data_requirements
 
-Stacked Column chart,
-
-Clustered bar chart,
-
-Clustered Column chart,
-
-100% Stacked bar chart,
-
-100% Stacked Column chart,
-
-Line Chart,
-
-Area Chart,
-
-Stacked Area Chart,
-
-100% Stacked Area Chart,
-
-Line and Stacked Column chart,
-
-Line and Clustered Column chart,
-
-Ribbon Chart,
-
-Waterfall Chart,
-
-Funnel,
-
-Scatter Chart,
-
-Pie Chart,
-
-Donut Chart,
-
-Treemap,
-
-Map,
-
-Filled Map,
-
-Azure Map,
-
-Gauge,
-
-Card,
-
-Multi-row Card,
-
-KPI,
-
-Slicer,
-
-Table,
-
-Matrix,
-
-R Script Visual,
-
-Python Visual ,
-
-Key Influencers,
-
-Decomposition Tree,
-
-Q & A,
-
-Narrative,
-
-Goals,
-
-Paginated Report,
-
-Tile Slicer,
-
-Card(new),
-
-ArcGIS for Power BI,
-
-Power Apps for Power BI,
-
-Power Automate for Power BI.
+bar_chart|Vertical or horizontal bar chart|Comparing categories, showing rankings|categorical_x_axis,numeric_y_axis
+line_chart|Time series or trend visualization|Showing trends over time, continuous data|datetime_or_numeric_x_axis,numeric_y_axis
+pie_chart|Circular chart showing proportions|Part-to-whole relationships, percentages|categorical_field,numeric_value
+donut_chart|Pie chart with hollow center|Part-to-whole with emphasis on total|categorical_field,numeric_value
+scatter_plot|Points plotted on x-y coordinates|Correlation analysis, outlier detection|numeric_x_axis,numeric_y_axis
+bubble_chart|Scatter plot with sized bubbles|Three-dimensional data relationships|numeric_x_axis,numeric_y_axis,numeric_size
+heatmap|Color-coded matrix visualization|Pattern identification, correlation matrices|categorical_x_axis,categorical_y_axis,numeric_value
+histogram|Distribution of continuous data|Data distribution analysis|numeric_field
+box_plot|Statistical summary visualization|Distribution comparison, outlier identification|categorical_grouping,numeric_values
+area_chart|Filled line chart|Cumulative values over time|datetime_x_axis,numeric_y_axis
+stacked_bar|Bars with multiple segments|Part-to-whole comparison across categories|categorical_x_axis,categorical_segment,numeric_value
+grouped_bar|Side-by-side bars|Multiple series comparison|categorical_x_axis,categorical_series,numeric_value
+waterfall_chart|Sequential positive/negative changes|Financial analysis, variance explanation|categorical_steps,numeric_changes
+gauge_chart|Speedometer-style indicator|KPI monitoring, target vs actual|single_numeric_value,target_range
+table|Tabular data display|Detailed data examination, exact values|any_data_types
+pivot_table|Cross-tabulated summary|Multi-dimensional data analysis|categorical_rows,categorical_columns,numeric_aggregates
+treemap|Hierarchical rectangles|Hierarchical data, proportional sizing|hierarchical_categories,numeric_values
+sankey_diagram|Flow visualization|Process flows, data movement|source_nodes,target_nodes,flow_values
+funnel_chart|Progressive reduction visualization|Conversion analysis, process stages|sequential_stages,numeric_values
+radar_chart|Multi-axis circular chart|Multi-dimensional comparison|multiple_numeric_metrics,categorical_subjects
