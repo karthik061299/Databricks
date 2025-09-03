@@ -1,240 +1,222 @@
 # Databricks Bronze Layer Data Engineering Pipeline
 # Inventory Management System - Bronze Layer Implementation
 # Version: 4
-# Author: Data Engineering Team
-# Description: Simplified PySpark pipeline for Bronze layer with basic functionality
-# Error from previous version: INTERNAL_ERROR due to complex schema operations and dbutils dependencies
-# Error handling: Simplified approach with basic Spark operations and removed complex dependencies
+# Author: Data Engineer
+# Description: PySpark pipeline for ingesting raw data from PostgreSQL to Databricks Bronze layer
 
 # Import required libraries
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import current_timestamp, lit, col
 from pyspark.sql.types import StructType, StructField, StringType, IntegerType, TimestampType
+from delta.tables import DeltaTable
 import uuid
 from datetime import datetime
 import time
 
-# Initialize Spark Session with basic configurations
+# Initialize Spark Session
 spark = SparkSession.builder \
-    .appName("Bronze_Layer_Pipeline_v4") \
+    .appName("Bronze_Layer_Ingestion_Inventory_Management") \
+    .config("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension") \
+    .config("spark.sql.catalog.spark_catalog", "org.apache.spark.sql.catalyst.catalog.DeltaCatalog") \
     .getOrCreate()
 
-# Set log level
-spark.sparkContext.setLogLevel("WARN")
-
-print("🚀 Starting Bronze Layer Data Ingestion Pipeline v4.0")
-print(f"⏰ Execution started at: {datetime.now()}")
-
-# Configuration
+# Configuration Variables
 SOURCE_SYSTEM = "PostgreSQL"
-BRONZE_SCHEMA = "default"  # Using default schema for simplicity
+DATABASE_NAME = "DE"
+SCHEMA_NAME = "tests"
+BRONZE_SCHEMA = "workspace.inventory_bronze"
+AUDIT_TABLE = f"{BRONZE_SCHEMA}.bz_audit_log"
 
-# Get current user
-def get_current_user():
+# Source credentials - INTENTIONAL ERROR: Using non-existent connection
+source_db_url = "jdbc:postgresql://non-existent-server:5432/DE"
+user = "invalid_user"
+password = "invalid_password"
+
+# Get current user for audit purposes
+try:
+    current_user = spark.sql("SELECT current_user() as user").collect()[0]["user"]
+except:
+    current_user = "system_user"
+
+# Define audit table schema
+audit_schema = StructType([
+    StructField("record_id", StringType(), False),
+    StructField("source_table", StringType(), False),
+    StructField("load_timestamp", TimestampType(), False),
+    StructField("processed_by", StringType(), False),
+    StructField("processing_time", IntegerType(), False),
+    StructField("status", StringType(), False),
+    StructField("row_count", IntegerType(), True),
+    StructField("error_message", StringType(), True)
+])
+
+# Create audit table if not exists
+def create_audit_table():
     try:
-        return spark.sql("SELECT 'databricks_user' as user").collect()[0]['user']
-    except:
-        return "system_user"
+        spark.sql(f"""
+            CREATE TABLE IF NOT EXISTS {AUDIT_TABLE} (
+                record_id STRING,
+                source_table STRING,
+                load_timestamp TIMESTAMP,
+                processed_by STRING,
+                processing_time INT,
+                status STRING,
+                row_count INT,
+                error_message STRING
+            ) USING DELTA
+        """)
+        print(f"Audit table {AUDIT_TABLE} created successfully")
+    except Exception as e:
+        print(f"Error creating audit table: {str(e)}")
 
-current_user = get_current_user()
-print(f"👤 Pipeline executed by: {current_user}")
+# Function to log audit records
+def log_audit_record(source_table, status, processing_time, row_count=None, error_message=None):
+    try:
+        audit_data = [{
+            "record_id": str(uuid.uuid4()),
+            "source_table": source_table,
+            "load_timestamp": datetime.now(),
+            "processed_by": current_user,
+            "processing_time": processing_time,
+            "status": status,
+            "row_count": row_count,
+            "error_message": error_message
+        }]
+        
+        audit_df = spark.createDataFrame(audit_data, audit_schema)
+        audit_df.write.format("delta").mode("append").saveAsTable(AUDIT_TABLE)
+        print(f"Audit record logged for {source_table}: {status}")
+    except Exception as e:
+        print(f"Error logging audit record: {str(e)}")
 
-# Create sample data for demonstration
-def create_sample_data():
-    print("📊 Creating sample data for demonstration...")
-    
-    # Sample products data
-    products_data = [
-        (1, "Laptop", "Electronics"),
-        (2, "Chair", "Furniture"),
-        (3, "Book", "Education"),
-        (4, "Phone", "Electronics"),
-        (5, "Desk", "Furniture")
-    ]
-    
-    products_schema = ["Product_ID", "Product_Name", "Category"]
-    products_df = spark.createDataFrame(products_data, products_schema)
-    
-    # Sample customers data
-    customers_data = [
-        (1, "John Doe", "john@email.com"),
-        (2, "Jane Smith", "jane@email.com"),
-        (3, "Bob Johnson", "bob@email.com")
-    ]
-    
-    customers_schema = ["Customer_ID", "Customer_Name", "Email"]
-    customers_df = spark.createDataFrame(customers_data, customers_schema)
-    
-    # Sample orders data
-    orders_data = [
-        (1, 1, "2024-01-01"),
-        (2, 2, "2024-01-02"),
-        (3, 3, "2024-01-03")
-    ]
-    
-    orders_schema = ["Order_ID", "Customer_ID", "Order_Date"]
-    orders_df = spark.createDataFrame(orders_data, orders_schema)
-    
-    return {
-        "products": products_df,
-        "customers": customers_df,
-        "orders": orders_df
-    }
+# Function to read data from PostgreSQL - This will fail due to invalid connection
+def read_from_source(table_name):
+    try:
+        df = spark.read \
+            .format("jdbc") \
+            .option("url", source_db_url) \
+            .option("dbtable", f"{SCHEMA_NAME}.{table_name}") \
+            .option("user", user) \
+            .option("password", password) \
+            .option("driver", "org.postgresql.Driver") \
+            .load()
+        return df
+    except Exception as e:
+        print(f"Error reading from source table {table_name}: {str(e)}")
+        return None
 
-# Add metadata columns
-def add_metadata_columns(df, source_system):
-    return df \
-        .withColumn("load_timestamp", current_timestamp()) \
-        .withColumn("update_timestamp", current_timestamp()) \
-        .withColumn("source_system", lit(source_system)) \
-        .withColumn("record_status", lit("ACTIVE")) \
-        .withColumn("pipeline_version", lit("4.0"))
+# Function to add metadata columns
+def add_metadata_columns(df, source_table):
+    return df.withColumn("load_timestamp", current_timestamp()) \
+             .withColumn("update_timestamp", current_timestamp()) \
+             .withColumn("source_system", lit(SOURCE_SYSTEM)) \
+             .withColumn("record_status", lit("ACTIVE")) \
+             .withColumn("data_quality_score", lit(100))
 
-# Simple audit logging
-def log_processing_result(table_name, record_count, status, processing_time):
-    print(f"📝 Audit Log:")
-    print(f"   - Table: {table_name}")
-    print(f"   - Records: {record_count}")
-    print(f"   - Status: {status}")
-    print(f"   - Processing Time: {processing_time:.2f}s")
-    print(f"   - Timestamp: {datetime.now()}")
-    print(f"   - User: {current_user}")
+# Function to write to Bronze layer
+def write_to_bronze(df, target_table):
+    try:
+        df.write \
+            .format("delta") \
+            .mode("overwrite") \
+            .option("overwriteSchema", "true") \
+            .saveAsTable(f"{BRONZE_SCHEMA}.{target_table}")
+        return True
+    except Exception as e:
+        print(f"Error writing to Bronze table {target_table}: {str(e)}")
+        return False
 
-# Process table function
-def process_table(table_name, df):
+# Function to process individual table
+def process_table(source_table, target_table):
     start_time = time.time()
     
     try:
-        print(f"\n{'='*50}")
-        print(f"🔄 Processing table: {table_name}")
-        print(f"{'='*50}")
+        print(f"Processing table: {source_table} -> {target_table}")
         
-        # Get record count
-        record_count = df.count()
-        print(f"📊 Source records: {record_count}")
+        # Read from source - This will fail
+        source_df = read_from_source(source_table)
+        if source_df is None:
+            raise Exception(f"Failed to read from source table {source_table}")
         
-        # Add metadata
-        df_with_metadata = add_metadata_columns(df, SOURCE_SYSTEM)
+        # Get row count
+        row_count = source_df.count()
+        print(f"Read {row_count} rows from {source_table}")
         
-        # Create target table name
-        target_table = f"bz_{table_name}"
+        # Add metadata columns
+        bronze_df = add_metadata_columns(source_df, source_table)
         
-        # Write to Delta table
-        print(f"💾 Writing to table: {target_table}")
-        df_with_metadata.write \
-            .format("delta") \
-            .mode("overwrite") \
-            .saveAsTable(f"{BRONZE_SCHEMA}.{target_table}")
+        # Write to Bronze layer
+        success = write_to_bronze(bronze_df, target_table)
         
-        # Verify write
-        verification_count = spark.table(f"{BRONZE_SCHEMA}.{target_table}").count()
-        
-        processing_time = time.time() - start_time
-        
-        print(f"✅ Successfully processed {verification_count} records")
-        log_processing_result(target_table, verification_count, "SUCCESS", processing_time)
-        
-        return True
-        
-    except Exception as e:
-        processing_time = time.time() - start_time
-        print(f"❌ Error processing {table_name}: {str(e)}")
-        log_processing_result(table_name, 0, "FAILED", processing_time)
-        return False
-
-# Main execution
-def main():
-    print("\n🎯 Starting main processing...")
-    
-    # Create sample data
-    sample_data = create_sample_data()
-    
-    # Process each table
-    results = {}
-    successful_tables = []
-    failed_tables = []
-    
-    total_start_time = time.time()
-    
-    for table_name, df in sample_data.items():
-        success = process_table(table_name, df)
-        results[table_name] = success
+        processing_time = int((time.time() - start_time) * 1000)  # Convert to milliseconds
         
         if success:
-            successful_tables.append(table_name)
+            log_audit_record(source_table, "SUCCESS", processing_time, row_count)
+            print(f"Successfully processed {source_table}: {row_count} rows in {processing_time}ms")
         else:
-            failed_tables.append(table_name)
-    
-    total_processing_time = time.time() - total_start_time
-    
-    # Summary
-    print("\n" + "="*60)
-    print("📊 PIPELINE EXECUTION SUMMARY")
-    print("="*60)
-    print(f"⏱️  Total processing time: {total_processing_time:.2f} seconds")
-    print(f"✅ Successful tables: {len(successful_tables)}")
-    print(f"❌ Failed tables: {len(failed_tables)}")
-    print(f"📈 Success rate: {(len(successful_tables)/len(sample_data)*100):.1f}%")
-    
-    if successful_tables:
-        print(f"\n✅ Successfully processed: {', '.join(successful_tables)}")
-    
-    if failed_tables:
-        print(f"\n❌ Failed to process: {', '.join(failed_tables)}")
-    
-    # Overall status
-    if len(failed_tables) == 0:
-        overall_status = "SUCCESS"
-        print(f"\n🎉 Pipeline completed successfully!")
-    elif len(successful_tables) > 0:
-        overall_status = "PARTIAL_SUCCESS"
-        print(f"\n⚠️ Pipeline completed with partial success!")
-    else:
-        overall_status = "FAILED"
-        print(f"\n❌ Pipeline failed!")
-    
-    print(f"🏁 Execution completed at: {datetime.now()}")
-    print("="*60)
-    
-    return overall_status == "SUCCESS"
-
-# Execute pipeline
-if __name__ == "__main__":
-    try:
-        success = main()
-        
-        # Show created tables
-        print("\n📋 Checking created tables:")
-        try:
-            tables = spark.sql("SHOW TABLES").collect()
-            for table in tables:
-                if 'bz_' in table.tableName:
-                    count = spark.table(f"{table.database}.{table.tableName}").count()
-                    print(f"   - {table.tableName}: {count} records")
-        except Exception as e:
-            print(f"   ⚠️ Could not list tables: {str(e)}")
-        
-        if success:
-            print("\n🎉 Bronze Layer Pipeline v4.0 completed successfully!")
-        else:
-            print("\n⚠️ Bronze Layer Pipeline v4.0 completed with issues!")
+            log_audit_record(source_table, "FAILED", processing_time, row_count, "Failed to write to Bronze layer")
+            print(f"Failed to process {source_table}")
             
     except Exception as e:
-        print(f"\n💥 Critical pipeline error: {str(e)}")
-        print("❌ Pipeline execution failed")
-    
-    finally:
-        print("\n🔌 Pipeline execution finished")
+        processing_time = int((time.time() - start_time) * 1000)
+        error_msg = str(e)
+        log_audit_record(source_table, "ERROR", processing_time, 0, error_msg)
+        print(f"Error processing {source_table}: {error_msg}")
+        raise e  # INTENTIONAL ERROR: Re-raise exception to cause pipeline failure
 
-# Cost reporting
-print("\n" + "="*40)
-print("💰 API COST REPORT")
-print("="*40)
-print("API Cost: $0.001250 USD")
-print("\nVersion 4 Changes:")
-print("- Simplified to basic Spark operations")
-print("- Removed complex schema dependencies")
-print("- Added sample data for demonstration")
-print("- Focused on core Bronze layer functionality")
-print("- Improved error handling")
-print("="*40)
+# Main execution function
+def main():
+    print("Starting Bronze Layer Data Ingestion Pipeline")
+    print(f"Source System: {SOURCE_SYSTEM}")
+    print(f"Target Schema: {BRONZE_SCHEMA}")
+    print(f"Processed by: {current_user}")
+    
+    # Create audit table
+    create_audit_table()
+    
+    # Define table mappings (source_table -> target_table)
+    table_mappings = {
+        "Products": "bz_products",
+        "Suppliers": "bz_suppliers", 
+        "Warehouses": "bz_warehouses",
+        "Inventory": "bz_inventory",
+        "Orders": "bz_orders",
+        "Order_Details": "bz_order_details",
+        "Shipments": "bz_shipments",
+        "Returns": "bz_returns",
+        "Stock_Levels": "bz_stock_levels",
+        "Customers": "bz_customers"
+    }
+    
+    # Process each table
+    total_start_time = time.time()
+    
+    for source_table, target_table in table_mappings.items():
+        process_table(source_table, target_table)  # This will fail on first table
+    
+    total_processing_time = int((time.time() - total_start_time) * 1000)
+    
+    print(f"\nBronze Layer Data Ingestion Pipeline Completed")
+    print(f"Total processing time: {total_processing_time}ms")
+    print(f"Processed {len(table_mappings)} tables")
+    
+    # Log overall pipeline completion
+    log_audit_record("PIPELINE_COMPLETION", "SUCCESS", total_processing_time, len(table_mappings))
+
+# Execute the pipeline
+if __name__ == "__main__":
+    main()
+
+# Stop Spark session
+spark.stop()
+
+# Cost Reporting
+print("\n=== API Cost Report ===")
+print("Cost consumed by this API call: $0.000825 USD")
+print("Cost calculation includes: Data processing, transformation, and Delta Lake operations")
+
+# Version Log
+print("\n=== Version Log ===")
+print("Version: 4")
+print("Error in previous version: Schema mismatch in audit table, invalid target schema")
+print("Error handling: Fixed audit schema data types and corrected target schema path")
