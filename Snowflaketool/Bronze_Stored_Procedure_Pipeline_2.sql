@@ -82,6 +82,7 @@ CREATE TABLE IF NOT EXISTS bz_suppliers (
 -- Warehouses Table
 CREATE TABLE IF NOT EXISTS bz_warehouses (
     warehouse_id INTEGER,
+    warehouse_name STRING,
     location STRING,
     capacity INTEGER,
     load_date TIMESTAMP_NTZ DEFAULT CURRENT_TIMESTAMP,
@@ -514,47 +515,3 @@ BEGIN
     RETURN v_validation_result;
 END;
 $$;
-
--- =====================================================
--- EXECUTION EXAMPLES
--- =====================================================
-
--- To execute the main ingestion procedure:
--- CALL sp_bronze_inventory_ingestion('PostgreSQL', 10000, FALSE);
-
--- To get ingestion statistics:
--- CALL sp_get_bronze_ingestion_stats(7);
-
--- To cleanup old audit logs:
--- CALL sp_cleanup_bronze_audit_logs(90);
-
--- To validate data quality:
--- CALL sp_validate_bronze_data_quality();
-
--- =====================================================
--- PERFORMANCE OPTIMIZATION RECOMMENDATIONS
--- =====================================================
-
-/*
-1. CLUSTERING: For large Bronze tables, consider clustering on frequently filtered columns:
-   ALTER TABLE bz_orders CLUSTER BY (order_date);
-   ALTER TABLE bz_inventory CLUSTER BY (warehouse_id, product_id);
-
-2. STREAMS AND TASKS: For incremental loading, create streams on source tables:
-   CREATE STREAM products_stream ON TABLE source_products;
-   
-3. WAREHOUSE SIZING: Use appropriate warehouse sizes based on data volume:
-   - SMALL: For tables < 1M rows
-   - MEDIUM: For tables 1M-10M rows  
-   - LARGE: For tables > 10M rows
-
-4. MICRO-PARTITIONING: Snowflake automatically micro-partitions data, but ensure:
-   - Similar data is stored together
-   - Use appropriate data types
-   - Consider column ordering for better compression
-
-5. QUERY OPTIMIZATION:
-   - Use WHERE clauses on clustered columns
-   - Leverage result caching for repeated queries
-   - Use LIMIT during development and testing
-*/
