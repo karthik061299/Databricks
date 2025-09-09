@@ -1,334 +1,560 @@
 _____________________________________________
--- *Author*: AAVA
--- *Created on*: 
--- *Description*: Comprehensive Snowflake Bronze layer stored procedure for inventory management data ingestion with audit logging and metadata tracking
--- *Version*: 2
--- *Updated on*: 
--- *Changes*: Fixed Snowflake compatibility issues, removed unsupported features, simplified stored procedures
--- *Reason*: Address Snowflake connector issues and ensure compatibility with Snowflake SQL syntax
+## *Author*: AAVA
+## *Created on*: 
+## *Description*: Updated Snowflake stored procedure for Bronze layer inventory management data ingestion with corrected syntax
+## *Version*: 2
+## *Changes*: Fixed Snowflake SQL syntax issues and improved error handling
+## *Reason*: Initial version had syntax compatibility issues
+## *Updated on*: 
 _____________________________________________
 
 -- =====================================================
--- BRONZE LAYER INVENTORY MANAGEMENT INGESTION PIPELINE
+-- SNOWFLAKE BRONZE LAYER DATA INGESTION STORED PROCEDURE
+-- FOR INVENTORY MANAGEMENT SYSTEM - VERSION 2 (CORRECTED)
 -- =====================================================
 
--- Create audit logging table for tracking ingestion events
-CREATE TABLE IF NOT EXISTS bronze_audit_log (
-    ingestion_id VARCHAR(50),
-    source_system VARCHAR(100) NOT NULL,
-    table_name VARCHAR(100) NOT NULL,
-    start_timestamp TIMESTAMP_NTZ NOT NULL,
+-- Create Bronze Schema if not exists
+CREATE SCHEMA IF NOT EXISTS BRONZE;
+USE SCHEMA BRONZE;
+
+-- =====================================================
+-- AUDIT AND ERROR TABLES CREATION
+-- =====================================================
+
+-- Create Audit Log Table
+CREATE TABLE IF NOT EXISTS bz_audit_log (
+    ingestion_id STRING DEFAULT CONCAT('ING_', TO_VARCHAR(CURRENT_TIMESTAMP, 'YYYYMMDDHH24MISS'), '_', TO_VARCHAR(ABS(RANDOM()) % 9000 + 1000)),
+    source_system STRING,
+    table_name STRING,
+    start_timestamp TIMESTAMP_NTZ,
     end_timestamp TIMESTAMP_NTZ,
     records_ingested INTEGER DEFAULT 0,
     records_failed INTEGER DEFAULT 0,
-    execution_status VARCHAR(20) DEFAULT 'RUNNING',
-    user_identity VARCHAR(100),
-    error_message VARCHAR(5000),
+    execution_status STRING,
+    user_identity STRING,
+    error_message STRING,
     processing_time_seconds INTEGER,
-    load_date TIMESTAMP_NTZ DEFAULT CURRENT_TIMESTAMP(),
-    update_date TIMESTAMP_NTZ DEFAULT CURRENT_TIMESTAMP()
+    load_date TIMESTAMP_NTZ DEFAULT CURRENT_TIMESTAMP,
+    update_date TIMESTAMP_NTZ DEFAULT CURRENT_TIMESTAMP
 );
 
--- Create error table for rejected records
-CREATE TABLE IF NOT EXISTS bronze_error_records (
-    error_id VARCHAR(50),
-    ingestion_id VARCHAR(50),
-    source_table VARCHAR(100),
-    error_type VARCHAR(100),
-    error_description VARCHAR(5000),
+-- Create Bronze Error Table
+CREATE TABLE IF NOT EXISTS bz_error_log (
+    error_id STRING DEFAULT CONCAT('ERR_', TO_VARCHAR(CURRENT_TIMESTAMP, 'YYYYMMDDHH24MISS'), '_', TO_VARCHAR(ABS(RANDOM()) % 9000 + 1000)),
+    ingestion_id STRING,
+    source_table STRING,
+    error_type STRING,
+    error_description STRING,
     rejected_record VARIANT,
-    error_timestamp TIMESTAMP_NTZ DEFAULT CURRENT_TIMESTAMP()
+    error_timestamp TIMESTAMP_NTZ DEFAULT CURRENT_TIMESTAMP,
+    user_identity STRING
 );
 
--- Create Bronze layer tables for inventory management
+-- =====================================================
+-- BRONZE LAYER TABLES CREATION
+-- =====================================================
 
--- Products table
+-- Products Table
 CREATE TABLE IF NOT EXISTS bz_products (
     product_id INTEGER,
-    product_name VARCHAR(255),
-    product_description VARCHAR(1000),
-    category_id INTEGER,
-    supplier_id INTEGER,
-    unit_price DECIMAL(10,2),
-    units_in_stock INTEGER,
-    units_on_order INTEGER,
-    reorder_level INTEGER,
-    discontinued BOOLEAN,
-    -- Metadata columns
-    load_date TIMESTAMP_NTZ DEFAULT CURRENT_TIMESTAMP(),
-    update_date TIMESTAMP_NTZ DEFAULT CURRENT_TIMESTAMP(),
-    source_system VARCHAR(100),
-    ingestion_id VARCHAR(50)
-) CLUSTER BY (category_id, supplier_id);
-
--- Suppliers table
-CREATE TABLE IF NOT EXISTS bz_suppliers (
-    supplier_id INTEGER,
-    company_name VARCHAR(255),
-    contact_name VARCHAR(100),
-    contact_title VARCHAR(100),
-    address VARCHAR(255),
-    city VARCHAR(100),
-    region VARCHAR(100),
-    postal_code VARCHAR(20),
-    country VARCHAR(100),
-    phone VARCHAR(50),
-    fax VARCHAR(50),
-    homepage VARCHAR(500),
-    -- Metadata columns
-    load_date TIMESTAMP_NTZ DEFAULT CURRENT_TIMESTAMP(),
-    update_date TIMESTAMP_NTZ DEFAULT CURRENT_TIMESTAMP(),
-    source_system VARCHAR(100),
-    ingestion_id VARCHAR(50)
-) CLUSTER BY (country, city);
-
--- Categories table
-CREATE TABLE IF NOT EXISTS bz_categories (
-    category_id INTEGER,
-    category_name VARCHAR(255),
-    description VARCHAR(1000),
-    -- Metadata columns
-    load_date TIMESTAMP_NTZ DEFAULT CURRENT_TIMESTAMP(),
-    update_date TIMESTAMP_NTZ DEFAULT CURRENT_TIMESTAMP(),
-    source_system VARCHAR(100),
-    ingestion_id VARCHAR(50)
+    product_name STRING,
+    category STRING,
+    load_date TIMESTAMP_NTZ DEFAULT CURRENT_TIMESTAMP,
+    update_date TIMESTAMP_NTZ DEFAULT CURRENT_TIMESTAMP,
+    source_system STRING DEFAULT 'PostgreSQL',
+    record_status STRING DEFAULT 'ACTIVE',
+    data_quality_score INTEGER DEFAULT 100
 );
 
--- Orders table
-CREATE TABLE IF NOT EXISTS bz_orders (
-    order_id INTEGER,
-    customer_id VARCHAR(10),
-    employee_id INTEGER,
-    order_date DATE,
-    required_date DATE,
-    shipped_date DATE,
-    ship_via INTEGER,
-    freight DECIMAL(10,2),
-    ship_name VARCHAR(255),
-    ship_address VARCHAR(255),
-    ship_city VARCHAR(100),
-    ship_region VARCHAR(100),
-    ship_postal_code VARCHAR(20),
-    ship_country VARCHAR(100),
-    -- Metadata columns
-    load_date TIMESTAMP_NTZ DEFAULT CURRENT_TIMESTAMP(),
-    update_date TIMESTAMP_NTZ DEFAULT CURRENT_TIMESTAMP(),
-    source_system VARCHAR(100),
-    ingestion_id VARCHAR(50)
-) CLUSTER BY (order_date, customer_id);
-
--- Order Details table
-CREATE TABLE IF NOT EXISTS bz_order_details (
-    order_id INTEGER,
+-- Suppliers Table
+CREATE TABLE IF NOT EXISTS bz_suppliers (
+    supplier_id INTEGER,
+    supplier_name STRING,
+    contact_number STRING,
     product_id INTEGER,
-    unit_price DECIMAL(10,2),
-    quantity INTEGER,
-    discount DECIMAL(5,2),
-    -- Metadata columns
-    load_date TIMESTAMP_NTZ DEFAULT CURRENT_TIMESTAMP(),
-    update_date TIMESTAMP_NTZ DEFAULT CURRENT_TIMESTAMP(),
-    source_system VARCHAR(100),
-    ingestion_id VARCHAR(50)
-) CLUSTER BY (order_id, product_id);
+    load_date TIMESTAMP_NTZ DEFAULT CURRENT_TIMESTAMP,
+    update_date TIMESTAMP_NTZ DEFAULT CURRENT_TIMESTAMP,
+    source_system STRING DEFAULT 'PostgreSQL',
+    record_status STRING DEFAULT 'ACTIVE',
+    data_quality_score INTEGER DEFAULT 100
+);
 
--- Inventory table
+-- Warehouses Table
+CREATE TABLE IF NOT EXISTS bz_warehouses (
+    warehouse_id INTEGER,
+    location STRING,
+    capacity INTEGER,
+    load_date TIMESTAMP_NTZ DEFAULT CURRENT_TIMESTAMP,
+    update_date TIMESTAMP_NTZ DEFAULT CURRENT_TIMESTAMP,
+    source_system STRING DEFAULT 'PostgreSQL',
+    record_status STRING DEFAULT 'ACTIVE',
+    data_quality_score INTEGER DEFAULT 100
+);
+
+-- Inventory Table
 CREATE TABLE IF NOT EXISTS bz_inventory (
     inventory_id INTEGER,
     product_id INTEGER,
-    warehouse_id INTEGER,
     quantity_available INTEGER,
-    quantity_reserved INTEGER,
-    last_updated TIMESTAMP_NTZ,
-    -- Metadata columns
-    load_date TIMESTAMP_NTZ DEFAULT CURRENT_TIMESTAMP(),
-    update_date TIMESTAMP_NTZ DEFAULT CURRENT_TIMESTAMP(),
-    source_system VARCHAR(100),
-    ingestion_id VARCHAR(50)
-) CLUSTER BY (warehouse_id, product_id);
+    warehouse_id INTEGER,
+    load_date TIMESTAMP_NTZ DEFAULT CURRENT_TIMESTAMP,
+    update_date TIMESTAMP_NTZ DEFAULT CURRENT_TIMESTAMP,
+    source_system STRING DEFAULT 'PostgreSQL',
+    record_status STRING DEFAULT 'ACTIVE',
+    data_quality_score INTEGER DEFAULT 100
+);
+
+-- Orders Table
+CREATE TABLE IF NOT EXISTS bz_orders (
+    order_id INTEGER,
+    customer_id INTEGER,
+    order_date DATE,
+    load_date TIMESTAMP_NTZ DEFAULT CURRENT_TIMESTAMP,
+    update_date TIMESTAMP_NTZ DEFAULT CURRENT_TIMESTAMP,
+    source_system STRING DEFAULT 'PostgreSQL',
+    record_status STRING DEFAULT 'ACTIVE',
+    data_quality_score INTEGER DEFAULT 100
+);
+
+-- Order Details Table
+CREATE TABLE IF NOT EXISTS bz_order_details (
+    order_detail_id INTEGER,
+    order_id INTEGER,
+    product_id INTEGER,
+    quantity_ordered INTEGER,
+    load_date TIMESTAMP_NTZ DEFAULT CURRENT_TIMESTAMP,
+    update_date TIMESTAMP_NTZ DEFAULT CURRENT_TIMESTAMP,
+    source_system STRING DEFAULT 'PostgreSQL',
+    record_status STRING DEFAULT 'ACTIVE',
+    data_quality_score INTEGER DEFAULT 100
+);
+
+-- Shipments Table
+CREATE TABLE IF NOT EXISTS bz_shipments (
+    shipment_id INTEGER,
+    order_id INTEGER,
+    shipment_date DATE,
+    load_date TIMESTAMP_NTZ DEFAULT CURRENT_TIMESTAMP,
+    update_date TIMESTAMP_NTZ DEFAULT CURRENT_TIMESTAMP,
+    source_system STRING DEFAULT 'PostgreSQL',
+    record_status STRING DEFAULT 'ACTIVE',
+    data_quality_score INTEGER DEFAULT 100
+);
+
+-- Returns Table
+CREATE TABLE IF NOT EXISTS bz_returns (
+    return_id INTEGER,
+    order_id INTEGER,
+    return_reason STRING,
+    load_date TIMESTAMP_NTZ DEFAULT CURRENT_TIMESTAMP,
+    update_date TIMESTAMP_NTZ DEFAULT CURRENT_TIMESTAMP,
+    source_system STRING DEFAULT 'PostgreSQL',
+    record_status STRING DEFAULT 'ACTIVE',
+    data_quality_score INTEGER DEFAULT 100
+);
+
+-- Stock Levels Table
+CREATE TABLE IF NOT EXISTS bz_stock_levels (
+    stock_level_id INTEGER,
+    warehouse_id INTEGER,
+    product_id INTEGER,
+    reorder_threshold INTEGER,
+    load_date TIMESTAMP_NTZ DEFAULT CURRENT_TIMESTAMP,
+    update_date TIMESTAMP_NTZ DEFAULT CURRENT_TIMESTAMP,
+    source_system STRING DEFAULT 'PostgreSQL',
+    record_status STRING DEFAULT 'ACTIVE',
+    data_quality_score INTEGER DEFAULT 100
+);
+
+-- Customers Table
+CREATE TABLE IF NOT EXISTS bz_customers (
+    customer_id INTEGER,
+    customer_name STRING,
+    email STRING,
+    load_date TIMESTAMP_NTZ DEFAULT CURRENT_TIMESTAMP,
+    update_date TIMESTAMP_NTZ DEFAULT CURRENT_TIMESTAMP,
+    source_system STRING DEFAULT 'PostgreSQL',
+    record_status STRING DEFAULT 'ACTIVE',
+    data_quality_score INTEGER DEFAULT 100
+);
 
 -- =====================================================
--- MAIN ORCHESTRATION PROCEDURE
+-- MAIN BRONZE LAYER INGESTION STORED PROCEDURE
 -- =====================================================
 
-CREATE OR REPLACE PROCEDURE bronze_inventory_ingestion_pipeline(
-    p_source_system VARCHAR DEFAULT 'INVENTORY_DB',
-    p_load_type VARCHAR DEFAULT 'FULL'
+CREATE OR REPLACE PROCEDURE sp_bronze_inventory_ingestion(
+    p_source_system STRING DEFAULT 'PostgreSQL',
+    p_batch_size INTEGER DEFAULT 10000,
+    p_enable_full_refresh BOOLEAN DEFAULT FALSE
 )
-RETURNS VARCHAR
+RETURNS STRING
 LANGUAGE SQL
 AS
 $$
 DECLARE
-    v_pipeline_start TIMESTAMP_NTZ;
-    v_pipeline_end TIMESTAMP_NTZ;
-    v_overall_status VARCHAR DEFAULT 'SUCCESS';
-    v_results VARCHAR DEFAULT '';
-    v_ingestion_id VARCHAR;
-    v_total_processing_time INTEGER;
-    v_records_count INTEGER;
+    -- Variables for audit logging
+    v_ingestion_id STRING;
+    v_start_time TIMESTAMP_NTZ;
+    v_end_time TIMESTAMP_NTZ;
+    v_current_user STRING;
+    v_processing_time INTEGER;
+    v_total_records_processed INTEGER DEFAULT 0;
+    v_total_records_failed INTEGER DEFAULT 0;
+    v_execution_status STRING DEFAULT 'SUCCESS';
+    v_error_message STRING DEFAULT '';
+    
+    -- Variables for table processing
+    v_table_name STRING;
+    v_records_processed INTEGER;
+    v_records_failed INTEGER;
+    v_sql_statement STRING;
+    v_quality_score INTEGER;
+    
 BEGIN
-    v_pipeline_start := CURRENT_TIMESTAMP();
+    -- Initialize audit variables
+    v_ingestion_id := CONCAT('ING_', TO_VARCHAR(CURRENT_TIMESTAMP, 'YYYYMMDDHH24MISS'), '_', TO_VARCHAR(ABS(RANDOM()) % 9000 + 1000));
+    v_start_time := CURRENT_TIMESTAMP;
+    v_current_user := CURRENT_USER();
     
-    -- Generate simple ingestion ID
-    v_ingestion_id := 'ING_' || TO_VARCHAR(CURRENT_TIMESTAMP(), 'YYYYMMDDHH24MISS');
+    -- Log ingestion start
+    INSERT INTO bz_audit_log (
+        ingestion_id, source_system, table_name, start_timestamp, 
+        execution_status, user_identity
+    ) VALUES (
+        v_ingestion_id, p_source_system, 'BATCH_START', v_start_time, 
+        'IN_PROGRESS', v_current_user
+    );
     
-    -- Log pipeline start
-    v_results := 'Bronze Inventory Ingestion Pipeline Started' || CHR(10);
-    v_results := v_results || 'Ingestion ID: ' || v_ingestion_id || CHR(10);
-    v_results := v_results || 'Source System: ' || p_source_system || CHR(10);
-    v_results := v_results || 'Load Type: ' || p_load_type || CHR(10) || CHR(10);
-    
-    -- Sample data ingestion for demonstration
+    -- Main processing logic with proper exception handling
     BEGIN
-        -- Insert audit log start
-        INSERT INTO bronze_audit_log (
-            ingestion_id, source_system, table_name, start_timestamp,
-            execution_status, user_identity, load_date
-        )
-        VALUES (
-            v_ingestion_id, p_source_system, 'PIPELINE_EXECUTION', v_pipeline_start,
-            'RUNNING', CURRENT_USER(), CURRENT_TIMESTAMP()
+        -- Sample data insertion for Products
+        v_table_name := 'bz_products';
+        INSERT INTO bz_products (product_id, product_name, category, load_date, update_date, source_system)
+        SELECT 
+            ROW_NUMBER() OVER (ORDER BY 1) as product_id,
+            'Sample Product ' || ROW_NUMBER() OVER (ORDER BY 1) as product_name,
+            CASE (ROW_NUMBER() OVER (ORDER BY 1) % 3) 
+                WHEN 0 THEN 'Electronics'
+                WHEN 1 THEN 'Apparel'
+                ELSE 'Furniture'
+            END as category,
+            CURRENT_TIMESTAMP as load_date,
+            CURRENT_TIMESTAMP as update_date,
+            p_source_system as source_system
+        FROM TABLE(GENERATOR(ROWCOUNT => 100));
+        
+        v_total_records_processed := v_total_records_processed + 100;
+        
+        -- Log table-level success
+        INSERT INTO bz_audit_log (
+            ingestion_id, source_system, table_name, start_timestamp, end_timestamp,
+            records_ingested, execution_status, user_identity
+        ) VALUES (
+            v_ingestion_id, p_source_system, v_table_name, v_start_time, CURRENT_TIMESTAMP,
+            100, 'SUCCESS', v_current_user
         );
         
-        -- Create sample products data
-        INSERT INTO bz_products (
-            product_id, product_name, product_description, category_id,
-            supplier_id, unit_price, units_in_stock, units_on_order,
-            reorder_level, discontinued, load_date, update_date,
-            source_system, ingestion_id
-        )
-        VALUES 
-            (1, 'Laptop Computer', 'High-performance laptop', 1, 1, 999.99, 50, 10, 5, FALSE, CURRENT_TIMESTAMP(), CURRENT_TIMESTAMP(), p_source_system, v_ingestion_id),
-            (2, 'Wireless Mouse', 'Ergonomic wireless mouse', 2, 2, 29.99, 200, 0, 20, FALSE, CURRENT_TIMESTAMP(), CURRENT_TIMESTAMP(), p_source_system, v_ingestion_id),
-            (3, 'USB Keyboard', 'Mechanical keyboard', 2, 1, 79.99, 75, 25, 10, FALSE, CURRENT_TIMESTAMP(), CURRENT_TIMESTAMP(), p_source_system, v_ingestion_id);
+        -- Sample data insertion for Suppliers
+        v_table_name := 'bz_suppliers';
+        INSERT INTO bz_suppliers (supplier_id, supplier_name, contact_number, product_id, load_date, update_date, source_system)
+        SELECT 
+            ROW_NUMBER() OVER (ORDER BY 1) as supplier_id,
+            'Supplier ' || ROW_NUMBER() OVER (ORDER BY 1) as supplier_name,
+            '+1-555-' || LPAD(TO_VARCHAR(ROW_NUMBER() OVER (ORDER BY 1)), 4, '0') as contact_number,
+            (ROW_NUMBER() OVER (ORDER BY 1) % 100) + 1 as product_id,
+            CURRENT_TIMESTAMP as load_date,
+            CURRENT_TIMESTAMP as update_date,
+            p_source_system as source_system
+        FROM TABLE(GENERATOR(ROWCOUNT => 50));
         
-        v_records_count := 3;
-        v_results := v_results || 'PRODUCTS: Successfully ingested ' || v_records_count || ' records' || CHR(10);
+        v_total_records_processed := v_total_records_processed + 50;
         
-        -- Create sample suppliers data
-        INSERT INTO bz_suppliers (
-            supplier_id, company_name, contact_name, contact_title,
-            address, city, region, postal_code, country, phone, fax,
-            homepage, load_date, update_date, source_system, ingestion_id
-        )
-        VALUES 
-            (1, 'Tech Solutions Inc.', 'John Smith', 'Sales Manager', '123 Tech St', 'San Francisco', 'CA', '94105', 'USA', '555-0123', '555-0124', 'www.techsolutions.com', CURRENT_TIMESTAMP(), CURRENT_TIMESTAMP(), p_source_system, v_ingestion_id),
-            (2, 'Global Electronics', 'Jane Doe', 'Account Executive', '456 Electronics Ave', 'New York', 'NY', '10001', 'USA', '555-0125', '555-0126', 'www.globalelectronics.com', CURRENT_TIMESTAMP(), CURRENT_TIMESTAMP(), p_source_system, v_ingestion_id);
+        -- Log table-level success
+        INSERT INTO bz_audit_log (
+            ingestion_id, source_system, table_name, start_timestamp, end_timestamp,
+            records_ingested, execution_status, user_identity
+        ) VALUES (
+            v_ingestion_id, p_source_system, v_table_name, v_start_time, CURRENT_TIMESTAMP,
+            50, 'SUCCESS', v_current_user
+        );
         
-        v_results := v_results || 'SUPPLIERS: Successfully ingested 2 records' || CHR(10);
+        -- Sample data insertion for Warehouses
+        v_table_name := 'bz_warehouses';
+        INSERT INTO bz_warehouses (warehouse_id, location, capacity, load_date, update_date, source_system)
+        SELECT 
+            ROW_NUMBER() OVER (ORDER BY 1) as warehouse_id,
+            'Warehouse Location ' || ROW_NUMBER() OVER (ORDER BY 1) as location,
+            (ROW_NUMBER() OVER (ORDER BY 1) % 10000) + 1000 as capacity,
+            CURRENT_TIMESTAMP as load_date,
+            CURRENT_TIMESTAMP as update_date,
+            p_source_system as source_system
+        FROM TABLE(GENERATOR(ROWCOUNT => 10));
         
-        -- Create sample categories data
-        INSERT INTO bz_categories (
-            category_id, category_name, description,
-            load_date, update_date, source_system, ingestion_id
-        )
-        VALUES 
-            (1, 'Computers', 'Desktop and laptop computers', CURRENT_TIMESTAMP(), CURRENT_TIMESTAMP(), p_source_system, v_ingestion_id),
-            (2, 'Accessories', 'Computer accessories and peripherals', CURRENT_TIMESTAMP(), CURRENT_TIMESTAMP(), p_source_system, v_ingestion_id);
+        v_total_records_processed := v_total_records_processed + 10;
         
-        v_results := v_results || 'CATEGORIES: Successfully ingested 2 records' || CHR(10);
+        -- Log table-level success
+        INSERT INTO bz_audit_log (
+            ingestion_id, source_system, table_name, start_timestamp, end_timestamp,
+            records_ingested, execution_status, user_identity
+        ) VALUES (
+            v_ingestion_id, p_source_system, v_table_name, v_start_time, CURRENT_TIMESTAMP,
+            10, 'SUCCESS', v_current_user
+        );
         
-        -- Create sample inventory data
-        INSERT INTO bz_inventory (
-            inventory_id, product_id, warehouse_id, quantity_available,
-            quantity_reserved, last_updated, load_date, update_date,
-            source_system, ingestion_id
-        )
-        VALUES 
-            (1, 1, 1, 45, 5, CURRENT_TIMESTAMP(), CURRENT_TIMESTAMP(), CURRENT_TIMESTAMP(), p_source_system, v_ingestion_id),
-            (2, 2, 1, 180, 20, CURRENT_TIMESTAMP(), CURRENT_TIMESTAMP(), CURRENT_TIMESTAMP(), p_source_system, v_ingestion_id),
-            (3, 3, 1, 65, 10, CURRENT_TIMESTAMP(), CURRENT_TIMESTAMP(), CURRENT_TIMESTAMP(), p_source_system, v_ingestion_id);
+        -- Sample data insertion for Inventory
+        v_table_name := 'bz_inventory';
+        INSERT INTO bz_inventory (inventory_id, product_id, quantity_available, warehouse_id, load_date, update_date, source_system)
+        SELECT 
+            ROW_NUMBER() OVER (ORDER BY 1) as inventory_id,
+            (ROW_NUMBER() OVER (ORDER BY 1) % 100) + 1 as product_id,
+            (ROW_NUMBER() OVER (ORDER BY 1) % 1000) + 1 as quantity_available,
+            (ROW_NUMBER() OVER (ORDER BY 1) % 10) + 1 as warehouse_id,
+            CURRENT_TIMESTAMP as load_date,
+            CURRENT_TIMESTAMP as update_date,
+            p_source_system as source_system
+        FROM TABLE(GENERATOR(ROWCOUNT => 200));
         
-        v_results := v_results || 'INVENTORY: Successfully ingested 3 records' || CHR(10);
+        v_total_records_processed := v_total_records_processed + 200;
+        
+        -- Log table-level success
+        INSERT INTO bz_audit_log (
+            ingestion_id, source_system, table_name, start_timestamp, end_timestamp,
+            records_ingested, execution_status, user_identity
+        ) VALUES (
+            v_ingestion_id, p_source_system, v_table_name, v_start_time, CURRENT_TIMESTAMP,
+            200, 'SUCCESS', v_current_user
+        );
+        
+        -- Sample data insertion for Customers
+        v_table_name := 'bz_customers';
+        INSERT INTO bz_customers (customer_id, customer_name, email, load_date, update_date, source_system)
+        SELECT 
+            ROW_NUMBER() OVER (ORDER BY 1) as customer_id,
+            'Customer ' || ROW_NUMBER() OVER (ORDER BY 1) as customer_name,
+            'customer' || ROW_NUMBER() OVER (ORDER BY 1) || '@email.com' as email,
+            CURRENT_TIMESTAMP as load_date,
+            CURRENT_TIMESTAMP as update_date,
+            p_source_system as source_system
+        FROM TABLE(GENERATOR(ROWCOUNT => 75));
+        
+        v_total_records_processed := v_total_records_processed + 75;
+        
+        -- Log table-level success
+        INSERT INTO bz_audit_log (
+            ingestion_id, source_system, table_name, start_timestamp, end_timestamp,
+            records_ingested, execution_status, user_identity
+        ) VALUES (
+            v_ingestion_id, p_source_system, v_table_name, v_start_time, CURRENT_TIMESTAMP,
+            75, 'SUCCESS', v_current_user
+        );
+        
+        -- Sample data insertion for Orders
+        v_table_name := 'bz_orders';
+        INSERT INTO bz_orders (order_id, customer_id, order_date, load_date, update_date, source_system)
+        SELECT 
+            ROW_NUMBER() OVER (ORDER BY 1) as order_id,
+            (ROW_NUMBER() OVER (ORDER BY 1) % 75) + 1 as customer_id,
+            DATEADD(DAY, -(ROW_NUMBER() OVER (ORDER BY 1) % 365), CURRENT_DATE) as order_date,
+            CURRENT_TIMESTAMP as load_date,
+            CURRENT_TIMESTAMP as update_date,
+            p_source_system as source_system
+        FROM TABLE(GENERATOR(ROWCOUNT => 150));
+        
+        v_total_records_processed := v_total_records_processed + 150;
+        
+        -- Log table-level success
+        INSERT INTO bz_audit_log (
+            ingestion_id, source_system, table_name, start_timestamp, end_timestamp,
+            records_ingested, execution_status, user_identity
+        ) VALUES (
+            v_ingestion_id, p_source_system, v_table_name, v_start_time, CURRENT_TIMESTAMP,
+            150, 'SUCCESS', v_current_user
+        );
         
     EXCEPTION
         WHEN OTHER THEN
-            v_overall_status := 'FAILED';
-            v_results := v_results || 'ERROR: ' || SQLERRM || CHR(10);
+            v_error_message := SQLERRM;
+            v_execution_status := 'FAILED';
+            
+            -- Log error details
+            INSERT INTO bz_error_log (
+                ingestion_id, source_table, error_type, error_description, user_identity
+            ) VALUES (
+                v_ingestion_id, COALESCE(v_table_name, 'BATCH_PROCESSING'), 'PROCESSING_ERROR', v_error_message, v_current_user
+            );
     END;
     
-    -- Calculate total processing time
-    v_pipeline_end := CURRENT_TIMESTAMP();
-    v_total_processing_time := DATEDIFF(SECOND, v_pipeline_start, v_pipeline_end);
+    -- Calculate processing time
+    v_end_time := CURRENT_TIMESTAMP;
+    v_processing_time := DATEDIFF(SECOND, v_start_time, v_end_time);
     
-    -- Update audit log with completion
-    UPDATE bronze_audit_log 
+    -- Update batch-level audit log
+    UPDATE bz_audit_log 
     SET 
-        end_timestamp = v_pipeline_end,
-        records_ingested = 10,
-        records_failed = 0,
-        execution_status = v_overall_status,
-        processing_time_seconds = v_total_processing_time,
-        update_date = CURRENT_TIMESTAMP()
-    WHERE ingestion_id = v_ingestion_id;
+        end_timestamp = v_end_time,
+        records_ingested = v_total_records_processed,
+        records_failed = v_total_records_failed,
+        execution_status = v_execution_status,
+        error_message = v_error_message,
+        processing_time_seconds = v_processing_time,
+        update_date = CURRENT_TIMESTAMP
+    WHERE ingestion_id = v_ingestion_id AND table_name = 'BATCH_START';
     
-    -- Final summary
-    v_results := v_results || CHR(10) || '=== PIPELINE SUMMARY ===' || CHR(10);
-    v_results := v_results || 'Overall Status: ' || v_overall_status || CHR(10);
-    v_results := v_results || 'Total Processing Time: ' || v_total_processing_time || ' seconds' || CHR(10);
-    v_results := v_results || 'Pipeline Completed at: ' || TO_VARCHAR(v_pipeline_end) || CHR(10);
-    
-    RETURN v_results;
+    -- Return summary
+    RETURN CONCAT(
+        'Ingestion completed. ID: ', v_ingestion_id, 
+        ', Status: ', v_execution_status,
+        ', Records Processed: ', TO_VARCHAR(v_total_records_processed),
+        ', Records Failed: ', TO_VARCHAR(v_total_records_failed),
+        ', Processing Time: ', TO_VARCHAR(v_processing_time), ' seconds'
+    );
 END;
 $$;
 
 -- =====================================================
--- MONITORING PROCEDURE
+-- UTILITY PROCEDURES
 -- =====================================================
 
-CREATE OR REPLACE PROCEDURE get_ingestion_statistics(
+-- Procedure to get ingestion statistics
+CREATE OR REPLACE PROCEDURE sp_get_bronze_ingestion_stats(
     p_days_back INTEGER DEFAULT 7
 )
-RETURNS VARCHAR
+RETURNS TABLE (
+    ingestion_date DATE,
+    total_ingestions INTEGER,
+    successful_ingestions INTEGER,
+    failed_ingestions INTEGER,
+    total_records_processed INTEGER
+)
 LANGUAGE SQL
 AS
 $$
 DECLARE
-    v_stats VARCHAR;
-    v_total_ingestions INTEGER;
-    v_successful_ingestions INTEGER;
-    v_failed_ingestions INTEGER;
-    v_total_records INTEGER;
+    res RESULTSET;
 BEGIN
-    -- Get statistics from audit log
-    SELECT 
-        COUNT(*),
-        SUM(CASE WHEN execution_status = 'SUCCESS' THEN 1 ELSE 0 END),
-        SUM(CASE WHEN execution_status = 'FAILED' THEN 1 ELSE 0 END),
-        SUM(COALESCE(records_ingested, 0))
-    INTO v_total_ingestions, v_successful_ingestions, v_failed_ingestions, v_total_records
-    FROM bronze_audit_log
-    WHERE start_timestamp >= DATEADD(DAY, -p_days_back, CURRENT_TIMESTAMP());
+    res := (
+        SELECT 
+            DATE(start_timestamp) as ingestion_date,
+            COUNT(*) as total_ingestions,
+            SUM(CASE WHEN execution_status = 'SUCCESS' THEN 1 ELSE 0 END) as successful_ingestions,
+            SUM(CASE WHEN execution_status = 'FAILED' THEN 1 ELSE 0 END) as failed_ingestions,
+            SUM(records_ingested) as total_records_processed
+        FROM bz_audit_log 
+        WHERE start_timestamp >= DATEADD(DAY, -p_days_back, CURRENT_DATE)
+          AND table_name != 'BATCH_START'
+        GROUP BY DATE(start_timestamp)
+        ORDER BY ingestion_date DESC
+    );
+    RETURN TABLE(res);
+END;
+$$;
+
+-- Procedure to clean up old audit logs
+CREATE OR REPLACE PROCEDURE sp_cleanup_bronze_audit_logs(
+    p_retention_days INTEGER DEFAULT 90
+)
+RETURNS STRING
+LANGUAGE SQL
+AS
+$$
+DECLARE
+    v_deleted_count INTEGER DEFAULT 0;
+    v_error_deleted_count INTEGER DEFAULT 0;
+BEGIN
+    -- Delete old audit logs
+    DELETE FROM bz_audit_log 
+    WHERE start_timestamp < DATEADD(DAY, -p_retention_days, CURRENT_DATE);
     
-    v_stats := '=== INGESTION STATISTICS (Last ' || p_days_back || ' days) ===' || CHR(10);
-    v_stats := v_stats || 'Total Ingestions: ' || COALESCE(v_total_ingestions, 0) || CHR(10);
-    v_stats := v_stats || 'Successful Ingestions: ' || COALESCE(v_successful_ingestions, 0) || CHR(10);
-    v_stats := v_stats || 'Failed Ingestions: ' || COALESCE(v_failed_ingestions, 0) || CHR(10);
-    v_stats := v_stats || 'Total Records Processed: ' || COALESCE(v_total_records, 0) || CHR(10);
+    v_deleted_count := SQLROWCOUNT;
     
-    RETURN v_stats;
+    -- Delete old error logs
+    DELETE FROM bz_error_log 
+    WHERE error_timestamp < DATEADD(DAY, -p_retention_days, CURRENT_DATE);
+    
+    v_error_deleted_count := SQLROWCOUNT;
+    
+    RETURN CONCAT('Cleaned up ', TO_VARCHAR(v_deleted_count), ' audit records and ', TO_VARCHAR(v_error_deleted_count), ' error records');
+END;
+$$;
+
+-- Procedure to validate data quality
+CREATE OR REPLACE PROCEDURE sp_validate_bronze_data_quality()
+RETURNS STRING
+LANGUAGE SQL
+AS
+$$
+DECLARE
+    v_products_count INTEGER;
+    v_suppliers_count INTEGER;
+    v_warehouses_count INTEGER;
+    v_inventory_count INTEGER;
+    v_customers_count INTEGER;
+    v_orders_count INTEGER;
+    v_validation_result STRING;
+BEGIN
+    -- Count records in each table
+    SELECT COUNT(*) INTO v_products_count FROM bz_products;
+    SELECT COUNT(*) INTO v_suppliers_count FROM bz_suppliers;
+    SELECT COUNT(*) INTO v_warehouses_count FROM bz_warehouses;
+    SELECT COUNT(*) INTO v_inventory_count FROM bz_inventory;
+    SELECT COUNT(*) INTO v_customers_count FROM bz_customers;
+    SELECT COUNT(*) INTO v_orders_count FROM bz_orders;
+    
+    -- Build validation result
+    v_validation_result := CONCAT(
+        'Data Quality Validation Results: ',
+        'Products: ', TO_VARCHAR(v_products_count), ', ',
+        'Suppliers: ', TO_VARCHAR(v_suppliers_count), ', ',
+        'Warehouses: ', TO_VARCHAR(v_warehouses_count), ', ',
+        'Inventory: ', TO_VARCHAR(v_inventory_count), ', ',
+        'Customers: ', TO_VARCHAR(v_customers_count), ', ',
+        'Orders: ', TO_VARCHAR(v_orders_count)
+    );
+    
+    RETURN v_validation_result;
 END;
 $$;
 
 -- =====================================================
--- USAGE EXAMPLES AND TESTING
+-- EXECUTION EXAMPLES
 -- =====================================================
 
--- Example 1: Run full pipeline for all tables
--- CALL bronze_inventory_ingestion_pipeline('INVENTORY_DB', 'FULL');
+-- To execute the main ingestion procedure:
+-- CALL sp_bronze_inventory_ingestion('PostgreSQL', 10000, FALSE);
 
--- Example 2: Get ingestion statistics
--- CALL get_ingestion_statistics(30);
+-- To get ingestion statistics:
+-- CALL sp_get_bronze_ingestion_stats(7);
 
--- Example 3: Check audit logs
--- SELECT * FROM bronze_audit_log ORDER BY start_timestamp DESC LIMIT 10;
+-- To cleanup old audit logs:
+-- CALL sp_cleanup_bronze_audit_logs(90);
 
--- Example 4: Check Bronze tables
--- SELECT COUNT(*) FROM bz_products;
--- SELECT COUNT(*) FROM bz_suppliers;
--- SELECT COUNT(*) FROM bz_categories;
--- SELECT COUNT(*) FROM bz_inventory;
+-- To validate data quality:
+-- CALL sp_validate_bronze_data_quality();
 
 -- =====================================================
--- END OF BRONZE LAYER INGESTION PIPELINE
+-- PERFORMANCE OPTIMIZATION RECOMMENDATIONS
 -- =====================================================
+
+/*
+1. CLUSTERING: For large Bronze tables, consider clustering on frequently filtered columns:
+   ALTER TABLE bz_orders CLUSTER BY (order_date);
+   ALTER TABLE bz_inventory CLUSTER BY (warehouse_id, product_id);
+
+2. STREAMS AND TASKS: For incremental loading, create streams on source tables:
+   CREATE STREAM products_stream ON TABLE source_products;
+   
+3. WAREHOUSE SIZING: Use appropriate warehouse sizes based on data volume:
+   - SMALL: For tables < 1M rows
+   - MEDIUM: For tables 1M-10M rows  
+   - LARGE: For tables > 10M rows
+
+4. MICRO-PARTITIONING: Snowflake automatically micro-partitions data, but ensure:
+   - Similar data is stored together
+   - Use appropriate data types
+   - Consider column ordering for better compression
+
+5. QUERY OPTIMIZATION:
+   - Use WHERE clauses on clustered columns
+   - Leverage result caching for repeated queries
+   - Use LIMIT during development and testing
+*/
